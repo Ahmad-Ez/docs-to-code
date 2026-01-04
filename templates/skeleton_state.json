@@ -1,0 +1,16 @@
+{
+  "projectConfig": {
+    "name": "",
+    "stack": ""
+  },
+  "architecture": {
+    "database": {},
+    "api": {}
+  },
+  "plan": {
+    "M1": {
+      "description": "Initialization",
+      "tasks": {}
+    }
+  }
+}
