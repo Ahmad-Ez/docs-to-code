@@ -30,7 +30,7 @@ function New-Project { & "C:\path\to\code\auto-archy\utils\bootstrap.sh" $args }
 
 ## 🛠 Usage Workflow
 
-### 1. Initialize a New Project
+### Initialize a New Project
 Run the alias you just created to scaffold a new project structure.
 
 ```bash
@@ -56,7 +56,7 @@ new-project "my-awesome-app"
 
 The agent will read your brief and generate a detailed technical plan in `.archy/state.json`.
 
-### 3. Phase 2: Construction (Builder Mode)
+### Phase 2: Construction (Builder Mode)
 * **Goal:** Execute the plan, one task at a time.
 * **Action:**
     1. Review the plan in `.archy/state.json` (optional).
@@ -71,7 +71,7 @@ The agent will read your brief and generate a detailed technical plan in `.archy
        * Run tests to verify correctness.
        * Mark the task as "completed" in `state.json`.
 
-### 4. Phase 3: Maintenance & Evolution
+### Phase 3: Maintenance & Evolution
 * **Goal:** Add features or refactor existing code safely.
 * **Action:**
     1. Ask the agent to plan a change:
