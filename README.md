@@ -1,48 +1,92 @@
-# Auto-Archy: The Autonomous Architect Protocol
+# Auto-Archy: Centralized Agent Protocol
 
-Auto-Archy is a "Prompt-as-Code" system that turns the Gemini CLI into a state-aware, autonomous software engineer. It replaces chat-based memory with a persistent `.archy/state.json` file, allowing for infinite-context software development.
+**Auto-Archy** is a "Prompt-as-Code" framework that transforms the Gemini CLI into a state-aware, autonomous software engineering lead. By replacing ephemeral chat memory with a persistent `.archy/state.json` file, it enables infinite-context development, architectural consistency, and rigorous task management.
 
-## Setup
-1. Clone this repo:
-   ```bash
-   git clone [https://github.com/Ahmad-Ez/auto-archy.git](https://github.com/Ahmad-Ez/auto-archy.git) ~/auto-archy
+## 🚀 Setup
 
-```
+### 1. Clone the Repository
+Clone this repository to a permanent location on your machine (e.g., `~/code`).
 
-2. Define a shell alias for convenience (add to .zshrc or .bashrc):
 ```bash
-alias archy-init="cp ~/auto-archy/templates/project_brief.md ."
-
+cd ~/code
+git clone https://github.com/Ahmad-Ez/auto-archy.git
 ```
 
+### 2. Configure the Alias
+Add the `new-project` alias to your shell configuration (`.zshrc`, `.bashrc`, or PowerShell profile) to easily bootstrap new projects.
 
+**Bash / Zsh:**
+```bash
+alias new-project="~/code/auto-archy/utils/bootstrap.sh"
+```
 
-## The Workflow
+**PowerShell:**
+```powershell
+function New-Project { & "C:\path\to\code\auto-archy\utils\bootstrap.sh" $args }
+```
+*(Reload your shell configuration after saving)*
 
-### Phase 1: The Blueprint (Architect Mode)
+---
 
-**Goal:** Define the project structure without writing code.
+## 🛠 Usage Workflow
 
-1. Create a `project_brief.md` in your folder.
-2. Start Gemini CLI.
-3. **Prompt:**
-> "I am uploading `~/auto-archy/PROTOCOL.md` and `project_brief.md`. Perform Phase 1: Blueprinting. Initialize the `.archy/state.json`."
+### 1. Initialize a New Project
+Run the alias you just created to scaffold a new project structure.
 
+```bash
+cd ~/code
+new-project "my-awesome-app"
+```
 
+**This script will:**
+* Create the folder `~/code/my-awesome-app`.
+* Initialize the hidden `.archy/` directory.
+* Seed the project with `project_brief.md` (for your requirements) and `state.json` (for the agent's memory).
+* **Print an "Initialization Prompt"** for you to copy.
 
-### Phase 2: The Build Loop (Builder Mode)
+### 2. Phase 1: Blueprinting (Architect Mode)
+* **Goal:** Define the architecture, stack, and development plan without writing code.
+* **Action:**
+    1. Edit `my-awesome-app/project_brief.md` to describe your application idea.
+    2. Start the Gemini CLI.
+    3. **Paste the Initialization Prompt** generated in step 1.
+       * *Context to provide:* `PROTOCOL.md`, `project_brief.md`
+       * *Prompt:*
+         > "I am starting a new project. Here is the PROTOCOL and the BRIEF. Please perform Phase 1: Blueprinting."
 
-**Goal:** Execute the plan one task at a time.
+The agent will read your brief and generate a detailed technical plan in `.archy/state.json`.
 
-1. Start a NEW Gemini session (flush context).
-2. **Prompt:**
-> "I am uploading `~/auto-archy/PROTOCOL.md` and `.archy/state.json`. Execute Milestone M1-T1. You have permission to read/write files."
+### 3. Phase 2: Construction (Builder Mode)
+* **Goal:** Execute the plan, one task at a time.
+* **Action:**
+    1. Review the plan in `.archy/state.json` (optional).
+    2. In the Gemini CLI, instruct the agent to execute a task:
+       * *Context to provide:* `PROTOCOL.md`, `.archy/state.json`
+       * *Prompt:*
+         > "Execute Task M1-T1."
+    3. **The Agent will:**
+       * Read the state and relevant files.
+       * Write a test case (TDD).
+       * Write the implementation code.
+       * Run tests to verify correctness.
+       * Mark the task as "completed" in `state.json`.
 
+### 4. Phase 3: Maintenance & Evolution
+* **Goal:** Add features or refactor existing code safely.
+* **Action:**
+    1. Ask the agent to plan a change:
+       * *Context to provide:* `PROTOCOL.md`, `.archy/state.json`
+       * *Prompt:*
+         > "I need to add user authentication. Update the plan."
+    2. The agent will amend `state.json` with new milestones/tasks.
+    3. Proceed with **Phase 2** execution for the new tasks.
 
+---
 
-### Phase 3: Maintenance
+## 📂 Core Components
 
-**Goal:** Add features or refactor safely.
-
-1. **Prompt:**
-> "I am uploading `~/auto-archy/PROTOCOL.md` and `.archy/state.json`. Phase 3: Amend the plan to add [Feature X]."
+| Component | Description |
+| :--- | :--- |
+| **`PROTOCOL.md`** | The "Operating System" for the agent. It defines the rules, phases, and behavior constraints. |
+| **`.archy/state.json`** | The persistent memory. Tracks the tech stack, database schema, API contracts, and task progress. |
+| **`project_brief.md`** | The user's requirements document. Edited by you to drive Phase 1. |
