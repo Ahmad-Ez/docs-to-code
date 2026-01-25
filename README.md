@@ -5,6 +5,7 @@
 ## 🚀 Setup
 
 ### 1. Clone the Repository
+
 Clone this repository to a permanent location on your machine (e.g., `~/code`).
 
 ```bash
@@ -13,17 +14,21 @@ git clone https://github.com/Ahmad-Ez/auto-archy.git
 ```
 
 ### 2. Configure the Alias
+
 Add the `new-project` alias to your shell configuration (`.zshrc`, `.bashrc`, or PowerShell profile) to easily bootstrap new projects.
 
 **Bash / Zsh:**
+
 ```bash
 alias new-project="~/code/auto-archy/utils/bootstrap.sh"
 ```
 
 **PowerShell:**
+
 ```powershell
 function New-Project { & "C:\path\to\code\auto-archy\utils\bootstrap.sh" $args }
 ```
+
 *(Reload your shell configuration after saving)*
 
 ---
@@ -31,6 +36,7 @@ function New-Project { & "C:\path\to\code\auto-archy\utils\bootstrap.sh" $args }
 ## 🛠 Usage Workflow
 
 ### Initialize a New Project
+
 Run the alias you just created to scaffold a new project structure.
 
 ```bash
@@ -39,12 +45,14 @@ new-project "my-awesome-app"
 ```
 
 **This script will:**
+
 * Create the folder `~/code/my-awesome-app`.
 * Initialize the hidden `.archy/` directory.
 * Seed the project with `project_brief.md` (for your requirements) and `state.json` (for the agent's memory).
 * **Print an "Initialization Prompt"** for you to copy.
 
 ### 2. Phase 1: Blueprinting (Architect Mode)
+
 * **Goal:** Define the architecture, stack, and development plan without writing code.
 * **Action:**
     1. Edit `my-awesome-app/project_brief.md` to describe your application idea.
@@ -57,6 +65,7 @@ new-project "my-awesome-app"
 The agent will read your brief and generate a detailed technical plan in `.archy/state.json`.
 
 ### Phase 2: Construction (Builder Mode)
+
 * **Goal:** Execute the plan, one task at a time.
 * **Action:**
     1. Review the plan in `.archy/state.json` (optional).
@@ -72,6 +81,7 @@ The agent will read your brief and generate a detailed technical plan in `.archy
        * Mark the task as "completed" in `state.json`.
 
 ### Phase 3: Maintenance & Evolution
+
 * **Goal:** Add features or refactor existing code safely.
 * **Action:**
     1. Ask the agent to plan a change:
