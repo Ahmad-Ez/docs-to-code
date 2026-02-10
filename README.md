@@ -1,102 +1,108 @@
-# Auto-Archy: Centralized Agent Protocol
+# 🤖 Auto-Archy (v4.0)
+**The "Mission Control" Protocol for AI-Assisted Software Engineering.**
 
-**Auto-Archy** is a "Prompt-as-Code" framework that transforms the Gemini CLI into a state-aware, autonomous software engineering lead. By replacing ephemeral chat memory with a persistent `.archy/state.json` file, it enables infinite-context development, architectural consistency, and rigorous task management.
+Auto-Archy is a drop-in **AI Project Manager & Lead Engineer** for the Gemini CLI. It decouples *Planning* (Architect) from *Execution* (Builder) using a file-based state system.
 
-## 🚀 Setup
-
-### 1. Clone the Repository
-
-Clone this repository to a permanent location on your machine (e.g., `~/code`).
-
-```bash
-cd ~/code
-git clone https://github.com/Ahmad-Ez/auto-archy.git
-```
-
-### 2. Configure the Alias
-
-Add the `new-project` alias to your shell configuration (`.zshrc`, `.bashrc`, or PowerShell profile) to easily bootstrap new projects.
-
-**Bash / Zsh:**
-
-```bash
-alias new-project="~/code/auto-archy/utils/bootstrap.sh"
-```
-
-**PowerShell:**
-
-```powershell
-function New-Project { & "C:\path\to\code\auto-archy\utils\bootstrap.sh" $args }
-```
-
-*(Reload your shell configuration after saving)*
+> **Philosophy:** "Docs-Driven Development." The AI never writes code without a Spec. The Spec never gets written without a Plan.
 
 ---
 
-## 🛠 Usage Workflow
+## 📦 Installation
 
-### Initialize a New Project
+Auto-Archy is designed to be portable. To "install" it into any project:
 
-Run the alias you just created to scaffold a new project structure.
+1.  **Copy** the entire `.archy` folder from this repo into the root of your target project.
+2.  **That's it.** Your project is now Auto-Archy enabled.
 
-```bash
-cd ~/code
-new-project "my-awesome-app"
+### Directory Structure
+Once installed, your project will look like this:
+
+```text
+my-project/
+├── .archy/
+│   ├── base-prompt.md         <-- 🚀 THE ENTRY POINT (Run this file)
+│   ├── auto-archy-protocol.md <-- 🧠 The Constitution (Rules & Modes)
+│   ├── mission-control.md     <-- 📋 The State (Kanban/Playlist)
+│   └── specs/                 <-- 📂 The Detailed Blueprints (Markdown)
+├── src/
+├── package.json
+└── ...
+
 ```
-
-**This script will:**
-
-* Create the folder `~/code/my-awesome-app`.
-* Initialize the hidden `.archy/` directory.
-* Seed the project with `project_brief.md` (for your requirements) and `state.json` (for the agent's memory).
-* **Print an "Initialization Prompt"** for you to copy.
-
-### 2. Phase 1: Blueprinting (Architect Mode)
-
-* **Goal:** Define the architecture, stack, and development plan without writing code.
-* **Action:**
-    1. Edit `my-awesome-app/project_brief.md` to describe your application idea.
-    2. Start the Gemini CLI.
-    3. **Paste the Initialization Prompt** generated in step 1.
-       * *Context to provide:* `PROTOCOL.md`, `project_brief.md`
-       * *Prompt:*
-         > "I am starting a new project. Here is the PROTOCOL and the BRIEF. Please perform Phase 1: Blueprinting."
-
-The agent will read your brief and generate a detailed technical plan in `.archy/state.json`.
-
-### Phase 2: Construction (Builder Mode)
-
-* **Goal:** Execute the plan, one task at a time.
-* **Action:**
-    1. Review the plan in `.archy/state.json` (optional).
-    2. In the Gemini CLI, instruct the agent to execute a task:
-       * *Context to provide:* `PROTOCOL.md`, `.archy/state.json`
-       * *Prompt:*
-         > "Execute Task M1-T1."
-    3. **The Agent will:**
-       * Read the state and relevant files.
-       * Write a test case (TDD).
-       * Write the implementation code.
-       * Run tests to verify correctness.
-       * Mark the task as "completed" in `state.json`.
-
-### Phase 3: Maintenance & Evolution
-
-* **Goal:** Add features or refactor existing code safely.
-* **Action:**
-    1. Ask the agent to plan a change:
-       * *Context to provide:* `PROTOCOL.md`, `.archy/state.json`
-       * *Prompt:*
-         > "I need to add user authentication. Update the plan."
-    2. The agent will amend `state.json` with new milestones/tasks.
-    3. Proceed with **Phase 2** execution for the new tasks.
 
 ---
 
-## 📂 Core Components
+## 🚀 Usage
 
-| Component | Description |
-| :--- | :--- |
-| **`PROTOCOL.md`** | The "Operating System" for the agent. It defines the rules, phases, and behavior constraints. |
-| **`.archy/state.json`** | The persistent memory. Tracks the tech stack, database schema, API contracts, and task progress. |
-| **`project_brief.md`** | The user's requirements document. Edited by you to drive Phase 1. |
+You interact with Auto-Archy through a single entry point using the Gemini CLI.
+
+### 1. The "Autopilot" (Builder Mode)
+
+To let Auto-Archy pick the next task from the queue and build it:
+
+```bash
+execute .archy/base-prompt.md
+
+```
+
+* **What happens:** It checks `.archy/mission-control.md`, finds the first unchecked `[ ]` item, reads its Spec file, and writes the code.
+
+### 2. The "Brainstorm" (Architect Mode)
+
+To plan a new feature or start a project from scratch:
+
+```bash
+execute .archy/base-prompt.md
+
+```
+
+* **Input inside CLI:** When prompted, type: *"Plan the User Referral System"*
+* **What happens:** It switches to **Architect Mode**. It will interview you, generate a `referral-system.md` file in `.archy/specs/`, and add it to the Mission Control queue.
+
+### 3. The "Hotfix" (Maintenance Mode)
+
+To fix a bug or refactor code without disturbing the plan:
+
+```bash
+execute .archy/base-prompt.md
+
+```
+
+* **Input inside CLI:** When prompted, type: *"Fix the CORS error in app.ts"*
+* **What happens:** It switches to **Maintenance Mode**. It fixes the code immediately. *Note: It will also update the relevant Spec file to keep documentation in sync.*
+
+---
+
+## 🧠 The 3 Modes
+
+| Mode | Trigger | Responsibility |
+| --- | --- | --- |
+| **👷 BUILDER** | Default (Empty Task) | **EXECUTION.** Reads a Spec file -> Writes Code -> Runs Tests -> Checks Box `[x]`. |
+| **📐 ARCHITECT** | "Plan X" or Empty Queue | **STRATEGY.** Interviews User -> Creates `.archy/specs/*.md` -> Updates `mission-control.md`. |
+| **🔧 MAINTAINER** | "Fix/Change X" | **ADAPTION.** Fixes Bugs -> Refactors Code -> Updates Legacy Specs. |
+
+---
+
+## ⚙️ Configuration
+
+You can customize the **Persona** for specific projects by editing `.archy/base-prompt.md`:
+
+```markdown
+**Role:** Senior Rust Systems Engineer
+**Focus:** Memory Safety, Zero-Cost Abstractions
+
+```
+
+---
+
+## 🛡️ The Iron Rules
+
+*Defined in `auto-archy-protocol.md`*
+
+1. **Spec-Lock:** No implementation code is written without a detailed Markdown Spec.
+2. **Filesystem is Truth:** The AI trusts the actual code over the plan.
+3. **Retroactive Documentation:** If a bug is fixed in Maintenance Mode, the original Spec file must be updated.
+
+---
+
+*Auto-Archy is a concept by Ahmad Ez. v4.0 "Mission Control".*
