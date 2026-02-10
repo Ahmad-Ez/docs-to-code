@@ -1,4 +1,4 @@
-# ARCHY PROTOCOL (v4.1)
+# DOCS-TO-CODE (ARCHY PROTOCOL) (v4.1)
 
 Version: 4.1.0
 Min-Compatible-Base-Prompt: 4.0.0
@@ -109,6 +109,7 @@ When multiple roles are present, determine composition as follows:
 5. **Update State**:
    - Mark specific checkboxes inside the Spec file as you complete them.
    - ONLY when the entire Spec is 100% done AND verification passes, mark the `mission-control.md` item as `[x]`.
+6. **Session End**: Output Session Summary and terminate (see Section 4).
 
 ---
 
@@ -193,6 +194,14 @@ When multiple roles are present, determine composition as follows:
    - `.archy/mission-control.md` — populated queue using Template 5.2, with:
      - All specs listed in dependency order
      - `Depends-On` declarations inline
+   - `.archy/archy-runner.sh` — generated using Template 5.5.2, with:
+     - AI CLI command configured (ask user during interview)
+     - Project name and paths set
+     - Made executable (`chmod +x`)
+   - `.archy/runner-config.sh` — generated using Template 5.5.1, with:
+     - AI CLI tool configured based on user's environment
+     - Project name filled in
+   - `.archy/sessions.log` — created empty for session logging
 
 6. **Present Summary**:
    - List all files to be created with brief descriptions
@@ -206,11 +215,57 @@ When multiple roles are present, determine composition as follows:
 
 8. **Handoff**:
    - Confirm all files created successfully
-   - Instruct user: *"Bootstrap complete. Run `execute @.archy/base-prompt.md` to begin building."*
+   - Instruct user: *"Bootstrap complete. Run `execute @.archy/base-prompt.md` to begin building, or `./archy/archy-runner.sh` for full autopilot."*
 
 ---
 
-## 4. AUTO-HEALING BEHAVIORS
+## 4. SESSION BOUNDARIES
+
+### One Task Per Session
+Each Builder Mode session MUST execute exactly ONE spec from the mission-control
+queue. This prevents context saturation and hallucination accumulation.
+
+### Session Contract
+At the end of every Builder Mode session, the AI MUST:
+1. Mark completed checkboxes in the spec file.
+2. Mark `[x]` in `mission-control.md` if the entire spec is verified.
+3. Output a **Session Summary** block:
+
+    ```
+    --- SESSION SUMMARY ---
+    Task: {spec filename}
+    Status: COMPLETED | FAILED | ESCALATED
+    Files Changed: {list}
+    Tests: PASS | FAIL (attempt {n}/3)
+    Next Eligible Task: {spec filename or "QUEUE EMPTY"}
+    ---
+    ```
+
+4. Terminate. Do not pick up the next task. A fresh session will be started
+   by the external runner.
+
+### Session Logging
+The external runner appends each Session Summary to `.archy/sessions.log`
+for debugging and audit trail purposes.
+
+### External Runner
+The outer automation loop is managed by `archy-runner.sh` (generated during
+Bootstrap from the runner template in `@.archy/archy-templates.md`).
+The AI does NOT manage the runner. It is a user-controlled script.
+
+### Why
+- Fresh context per task prevents hallucination accumulation.
+- Each session loads only the protocol + base-prompt + one spec.
+- The external runner manages the loop, context clearing, and failure handling.
+
+### Failure Handling
+- If status is FAILED or ESCALATED, the session summary communicates this
+  to the external runner via the summary block.
+- The runner script decides whether to continue or halt.
+
+---
+
+## 5. AUTO-HEALING BEHAVIORS
 
 | Condition | Action |
 |-----------|--------|
@@ -223,7 +278,7 @@ When multiple roles are present, determine composition as follows:
 
 ---
 
-## 5. TEMPLATES
+## 6. TEMPLATES
 
 All templates are maintained in a separate file to minimize runtime context consumption.
 
@@ -234,12 +289,14 @@ Templates included:
 - **5.2** Mission Control Template
 - **5.3** Base-Prompt Template
 - **5.4** Project Brief Template
+- **5.5.1** Runner Configuration Template
+- **5.5.2** Runner Script Template
 
 This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode B) when creating new artifacts. It is NOT loaded during Builder Mode or Maintenance Mode.
 
 ---
 
-## 6. GLOSSARY
+## 7. GLOSSARY
 
 | Term | Definition |
 |------|------------|
@@ -252,17 +309,20 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 | **Iron Rules** | Non-negotiable directives that cannot be overridden by any other configuration |
 | **Bootstrap** | The first-run mode that generates all project scaffolding from a project brief |
 | **Project Brief** | A structured document describing the project vision, features, stack, and constraints — the input to Bootstrap Mode |
+| **Runner** | The external shell script (`archy-runner.sh`) that manages the autopilot loop across fresh AI sessions |
+| **Session Summary** | A structured output block produced at the end of every Builder session for logging and runner coordination |
+| **Session Log** | The file (`.archy/sessions.log`) where session summaries are appended for audit trail |
 
 ---
 
-## 7. VERSION HISTORY
+## 8. VERSION HISTORY
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability rule, templates reference, auto-healing behaviors, failure escalation, Bootstrap Mode (Mode D), split templates into separate file for context efficiency |
+| 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability rule, templates reference, auto-healing behaviors, failure escalation, Bootstrap Mode (Mode D), Session Boundaries (Section 4), runner script generation, session logging, split templates into separate file for context efficiency |
 | 4.0.0 | — | Initial "Mission Control" architecture |
 
 ---
 
-*Archy Protocol v4.1 — "Mission Control"*
+*Docs-to-Code (Archy Protocol) v4.1 — "Mission Control"*
 *Designed for full automation with strategic human oversight.*
