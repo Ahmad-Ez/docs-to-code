@@ -148,6 +148,68 @@ When multiple roles are present, determine composition as follows:
 
 ---
 
+### MODE D: BOOTSTRAP (First Run)
+
+**Triggered by**: No `base-prompt.md` or `mission-control.md` exists in `.archy/`
+
+**Directives**:
+
+1. **Detect Entry State**:
+   - If `project-brief.md` (or similar) is provided/referenced → proceed to step 3
+   - If no brief exists → proceed to step 2
+
+2. **Interview (No Brief)**:
+   - Ask user for:
+     - Project vision and purpose
+     - Core features (prioritized)
+     - Tech stack preferences or constraints
+     - Known constraints (compliance, integrations, timeline)
+     - Out-of-scope items for v1
+     - Success criteria
+   - Generate `.archy/project-brief.md` using Template 5.4
+   - Present to user for confirmation before proceeding
+
+3. **Analyze Brief**:
+   - Extract tech stack decisions
+   - Identify feature set and logical groupings
+   - Map dependencies between features
+   - Determine appropriate default Role for the project
+   - Identify any open questions requiring clarification
+
+4. **Clarify Open Questions**:
+   - If brief contains ambiguities or open questions, ask user before proceeding
+   - Do not assume — get explicit answers
+
+5. **Generate Artifacts** (in order):
+   - `.archy/base-prompt.md` — customized using Template 5.3, with:
+     - Project identity filled in
+     - Default role appropriate to stack
+     - Project archetype with stack conventions
+     - Test command configured
+   - `.archy/specs/*.md` — one spec per identified task, using Template 5.1, with:
+     - Logical numbering (00-, 01-, 02-, etc.)
+     - Dependencies mapped
+     - Appropriate roles assigned per task
+   - `.archy/mission-control.md` — populated queue using Template 5.2, with:
+     - All specs listed in dependency order
+     - `Depends-On` declarations inline
+
+6. **Present Summary**:
+   - List all files to be created with brief descriptions
+   - Display dependency graph (text-based)
+   - Show estimated task count and suggested milestone groupings
+   - Ask user for approval before writing any files
+
+7. **Write Files**:
+   - Upon approval, create all files
+   - Do NOT begin building — that's a separate command
+
+8. **Handoff**:
+   - Confirm all files created successfully
+   - Instruct user: *"Bootstrap complete. Run `execute @.archy/base-prompt.md` to begin building."*
+
+---
+
 ## 4. AUTO-HEALING BEHAVIORS
 
 | Condition | Action |
@@ -157,6 +219,7 @@ When multiple roles are present, determine composition as follows:
 | Spec appears stale vs. codebase | Flag in output, suggest Maintenance Mode review |
 | Circular dependency in mission-control | HALT, display cycle, ask user to resolve |
 | Ambiguous or vague spec | HALT Builder, switch to Architect to refine |
+| Missing `base-prompt.md` or `mission-control.md` | Trigger Bootstrap Mode |
 
 ---
 
@@ -370,6 +433,132 @@ Read and internalize: `@.archy/auto-archy-protocol.md`
 
 ---
 
+### 5.4 Project Brief Template
+
+```markdown
+# Project Brief: {Project Name}
+
+## 1. Vision
+
+{One paragraph: What is this? Who is it for? What problem does it solve?}
+
+---
+
+## 2. Core Features
+
+List features in priority order (P0 = must-have for v1, P1 = important, P2 = nice-to-have):
+
+- **P0**: {Feature 1} — {brief description}
+- **P0**: {Feature 2} — {brief description}
+- **P1**: {Feature 3} — {brief description}
+- **P2**: {Feature 4} — {brief description}
+
+---
+
+## 3. Tech Stack
+
+### Required/Preferred
+- **Runtime**: {e.g., Node.js 20, Python 3.12, Bun}
+- **Framework**: {e.g., Next.js 14, FastAPI, SvelteKit}
+- **Database**: {e.g., PostgreSQL, MongoDB, SQLite, Supabase}
+- **ORM/Query Builder**: {e.g., Prisma, Drizzle, SQLAlchemy}
+- **Auth**: {e.g., NextAuth, Clerk, Lucia, custom JWT}
+- **Hosting**: {e.g., Vercel, AWS, Railway, self-hosted}
+
+### Optional/Under Consideration
+- **Cache**: {e.g., Redis, in-memory}
+- **Storage**: {e.g., S3, Cloudflare R2, local}
+- **Payments**: {e.g., Stripe, Lemon Squeezy}
+- **Email**: {e.g., Resend, SendGrid, Postmark}
+- **Other**: {any other services or tools}
+
+### Open to Suggestions
+{List areas where you'd like the Architect to recommend options}
+
+---
+
+## 4. Constraints & Requirements
+
+### Technical Constraints
+- {e.g., Must work offline}
+- {e.g., Must support multi-tenancy}
+- {e.g., API response time < 200ms}
+
+### Compliance & Security
+- {e.g., GDPR compliance required}
+- {e.g., SOC2 considerations}
+- {e.g., Data must not leave EU}
+
+### Integration Requirements
+- {e.g., Must integrate with existing legacy API at X}
+- {e.g., SSO with company Okta}
+
+### Timeline & Resources
+- {e.g., MVP needed in 4 weeks}
+- {e.g., Solo developer}
+
+---
+
+## 5. Out of Scope (v1)
+
+Explicitly list what is NOT included in the initial release:
+
+- {e.g., Mobile app — web only for v1}
+- {e.g., Multi-language / i18n support}
+- {e.g., Advanced analytics dashboard}
+- {e.g., Public API for third-party integrations}
+
+---
+
+## 6. User Roles & Personas
+
+| Role | Description | Key Actions |
+|------|-------------|-------------|
+| {e.g., Admin} | {e.g., Platform owner, manages settings} | {e.g., CRUD users, view analytics, configure billing} |
+| {e.g., Member} | {e.g., Regular user of the platform} | {e.g., Create projects, invite collaborators} |
+| {e.g., Guest} | {e.g., View-only access via shared link} | {e.g., View shared content, leave comments} |
+
+---
+
+## 7. Success Criteria
+
+Define what "done" looks like for v1:
+
+### Functional
+- {e.g., User can sign up, verify email, and log in}
+- {e.g., User can create, edit, and delete projects}
+- {e.g., Admin can manage users and billing}
+
+### Non-Functional
+- {e.g., 90% test coverage on core modules}
+- {e.g., Lighthouse performance score > 90}
+- {e.g., Page load time < 2s on 3G}
+- {e.g., Zero critical security vulnerabilities}
+
+---
+
+## 8. Existing Assets (Optional)
+
+{List anything that already exists and should be incorporated or respected}
+
+- {e.g., Existing database with schema at `docs/legacy-schema.sql`}
+- {e.g., Brand guidelines at `docs/brand.pdf`}
+- {e.g., Figma designs at [link]}
+- {e.g., Existing API docs at [link]}
+
+---
+
+## 9. Open Questions
+
+{Unresolved decisions for Architect Mode to clarify with the user}
+
+- {e.g., Should we use server-side or client-side auth state management?}
+- {e.g., Do we need real-time features (WebSocket) for v1?}
+- {e.g., Monorepo or separate repos for frontend/backend?}
+```
+
+---
+
 ## 6. GLOSSARY
 
 | Term | Definition |
@@ -380,6 +569,8 @@ Read and internalize: `@.archy/auto-archy-protocol.md`
 | **Protocol** | This file — the immutable constitution that defines Auto-Archy's behavior |
 | **Artifact** | Any file created or modified as part of a spec's implementation |
 | **Iron Rules** | Non-negotiable directives that cannot be overridden by any other configuration |
+| **Bootstrap** | The first-run mode that generates all project scaffolding from a project brief |
+| **Project Brief** | A structured document describing the project vision, features, stack, and constraints — the input to Bootstrap Mode |
 
 ---
 
@@ -387,23 +578,8 @@ Read and internalize: `@.archy/auto-archy-protocol.md`
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability rule, templates section, auto-healing behaviors, failure escalation |
+| 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability rule, templates section, auto-healing behaviors, failure escalation, Bootstrap Mode, Project Brief template |
 | 4.0.0 | — | Initial "Mission Control" architecture |
-
----
-
-## 8. BOOTSTRAP (First Run)
-
-**Triggered by**: No `base-prompt.md` or `mission-control.md` exists in `.archy/`
-
-**Directives**:
-1. Greet user, confirm Architect Mode activation
-2. Ask for project brief (or read if file path provided)
-3. Generate in order:
-   - `.archy/base-prompt.md` — using Template 5.3, customized to project
-   - `.archy/mission-control.md` — using Template 5.2, populated with initial specs
-   - `.archy/specs/*.md` — all identified tasks
-4. Present summary to user for approval before writing files
 
 ---
 
