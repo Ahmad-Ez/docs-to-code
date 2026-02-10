@@ -376,7 +376,7 @@ MISSION_CONTROL="$ARCHY_DIR/mission-control.md"
 SESSION_LOG="$ARCHY_DIR/sessions.log"
 
 # Runner Settings
-MAX_TASKS=50          # Safety limit — max tasks per autopilot run
+MAX_TASKS=7          # Safety limit — max tasks per autopilot run
 PAUSE_BETWEEN=2       # Seconds to pause between sessions (rate limiting)
 DRY_RUN=false         # Set to true to preview without executing
 ```

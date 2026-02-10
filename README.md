@@ -18,11 +18,14 @@ gemini "Read @.archy/archy-protocol.md and bootstrap this project based on @proj
 # 2b. If you don't have a brief yet:
 gemini "Read @.archy/archy-protocol.md and bootstrap this project"
 
-# 3. After bootstrap, run autopilot:
+# 3. After bootstrap, run autopilot (single task per session):
 gemini "execute @.archy/base-prompt.md"
+
+# 4. Or use the runner for full hands-off autopilot:
+./.archy/archy-runner.sh
 ```
 
-That's it. Archy will generate your base-prompt, specs, and mission-control, then build your project task by task.
+That's it. Archy will generate your base-prompt, specs, mission-control, and a runner script, then build your project task by task — one fresh session per spec.
 
 ---
 
@@ -37,11 +40,14 @@ That's it. Archy will generate your base-prompt, specs, and mission-control, the
   - [Builder Mode (Autopilot)](#builder-mode-autopilot)
   - [Architect Mode (Planning)](#architect-mode-planning)
   - [Maintenance Mode (Fixes & Refactors)](#maintenance-mode-fixes--refactors)
+  - [The Runner (Full Autopilot)](#the-runner-full-autopilot)
 - [Modes Overview](#modes-overview)
+- [Session Boundaries](#session-boundaries)
 - [The Role System](#the-role-system)
 - [Directory Structure](#directory-structure)
 - [Configuration & Customization](#configuration--customization)
 - [The Iron Rules](#the-iron-rules)
+- [Auto-Healing Behaviors](#auto-healing-behaviors)
 - [Context Efficiency](#context-efficiency)
 - [FAQ](#faq)
 - [Version History](#version-history)
@@ -75,7 +81,7 @@ This is the `docs-to-code` repo. It contains only what needs to be portable:
 ```
 docs-to-code/
 ├── archy-protocol.md     # 🧠 The Constitution — runtime rules, modes, role system
-├── archy-templates.md     # 📐 Templates — spec, mission-control, base-prompt, project brief
+├── archy-templates.md     # 📐 Templates — spec, mission-control, base-prompt, project brief, runner
 └── README.md              # 📖 This file
 ```
 
@@ -124,10 +130,14 @@ gemini "Read @.archy/archy-protocol.md and bootstrap this project"
 ```
 
 Archy will interview you, then generate:
+
 - `.archy/project-brief.md` (if created from interview)
 - `.archy/base-prompt.md` (customized to your project)
 - `.archy/specs/*.md` (one per identified task)
 - `.archy/mission-control.md` (dependency-ordered queue)
+- `.archy/archy-runner.sh` (autopilot loop script)
+- `.archy/runner-config.sh` (runner configuration)
+- `.archy/sessions.log` (empty, for session audit trail)
 
 All files are presented for your approval before being written.
 
@@ -142,15 +152,19 @@ gemini "execute @.archy/base-prompt.md"
 ```
 
 **What happens:**
-1. Reads `mission-control.md`
-2. Finds the first `[ ]` item with all dependencies satisfied
-3. Loads the referenced spec file
-4. Writes tests first (TDD)
-5. Implements the code
-6. Runs verification
-7. Marks checkboxes in spec, then marks `[x]` in mission-control
 
-Repeat until the queue is empty.
+1. Reads `mission-control.md`
+2. Parses `Depends-On` declarations and builds an implicit dependency graph
+3. Finds the first `[ ]` item with all dependencies satisfied (`[x]`)
+4. Loads the referenced spec file
+5. Resolves the session Role (see [The Role System](#the-role-system))
+6. Writes tests first (TDD)
+7. Implements the code
+8. Runs verification
+9. Marks checkboxes in spec, then marks `[x]` in mission-control
+10. Outputs a **Session Summary** and terminates
+
+Each session executes **exactly one spec**, then exits. This prevents context saturation and hallucination accumulation.
 
 ---
 
@@ -172,10 +186,12 @@ gemini "execute @.archy/base-prompt.md"
 ```
 
 **What happens:**
+
 1. Interviews you for requirements and edge cases
 2. Creates new spec file(s) in `.archy/specs/`
 3. Appends them to `mission-control.md` with dependency declarations
-4. Suggests base-prompt updates if project conventions change
+4. Generates prerequisite specs if dependencies don't yet exist
+5. Suggests base-prompt updates if project conventions change
 
 ---
 
@@ -197,10 +213,38 @@ gemini "execute @.archy/base-prompt.md"
 ```
 
 **What happens:**
+
 1. Traces the bug to the original spec
 2. Applies the fix using TDD
 3. Updates the spec to reflect new logic (retroactive documentation)
-4. Does NOT mark mission-control items unless explicitly told to
+4. Flags stale specs if implementation has drifted significantly
+5. Does NOT mark mission-control items unless explicitly told to
+
+---
+
+### The Runner (Full Autopilot)
+
+The runner is an external shell script that manages the loop across fresh AI sessions. It is generated during Bootstrap.
+
+```bash
+# Normal autopilot
+./.archy/archy-runner.sh
+
+# Preview mode (no execution)
+./.archy/archy-runner.sh --dry-run
+
+# Limit to 10 tasks
+./.archy/archy-runner.sh --max 10
+```
+
+**What happens:**
+
+1. Launches one AI session per task in a fresh context
+2. The AI handles ONE spec, outputs a Session Summary, and exits
+3. The runner parses the result, logs it to `sessions.log`, and decides whether to continue
+4. Halts after 3 consecutive failures
+
+**Configuration** is in `.archy/runner-config.sh` — set your AI CLI tool, project name, rate limiting, and safety limits there.
 
 ---
 
@@ -212,6 +256,35 @@ gemini "execute @.archy/base-prompt.md"
 | 👷 **BUILDER** | Empty `Target_Task` + pending items in queue | Executes specs: writes tests → code → verifies → checks box |
 | 📐 **ARCHITECT** | `Target_Task = "Plan X"` or empty queue | Interviews user → creates specs → updates mission-control |
 | 🔧 **MAINTENANCE** | `Target_Task = "Fix/Change X"` | Fixes bugs → refactors → updates legacy specs |
+
+---
+
+## Session Boundaries
+
+### One Task Per Session
+
+Each Builder Mode session executes **exactly ONE spec** from the mission-control queue. This is a core design principle, not a limitation.
+
+### Session Contract
+
+At the end of every Builder session, the AI outputs:
+
+```
+--- SESSION SUMMARY ---
+Task: {spec filename}
+Status: COMPLETED | FAILED | ESCALATED
+Files Changed: {list}
+Tests: PASS | FAIL (attempt {n}/3)
+Next Eligible Task: {spec filename or "QUEUE EMPTY"}
+---
+```
+
+### Why
+
+- Fresh context per task prevents hallucination accumulation
+- Each session loads only the protocol + base-prompt + one spec
+- The external runner manages the loop, context clearing, and failure handling
+- Session summaries are appended to `.archy/sessions.log` for audit trail
 
 ---
 
@@ -244,6 +317,8 @@ When roles from different levels coexist:
 | `Role: =DBA` | Force replace — ignore base-prompt role |
 | `Role: +Security Auditor` | Force merge — add to base-prompt role |
 
+Spec roles apply **only** during that spec's execution. The session reverts to the base-prompt role afterward.
+
 ---
 
 ## Directory Structure
@@ -258,6 +333,9 @@ my-project/
 │   ├── base-prompt.md          # 🚀 The Entry Point (project-specific, generated)
 │   ├── mission-control.md      # 📋 The Queue (dependency-ordered)
 │   ├── project-brief.md        # 📝 The Brief (if generated from interview)
+│   ├── archy-runner.sh         # 🔄 The Autopilot Loop (generated, executable)
+│   ├── runner-config.sh        # ⚙️ Runner Configuration (generated)
+│   ├── sessions.log            # 📊 Session Audit Trail
 │   └── specs/                  # 📂 The Blueprints
 │       ├── 00-project-init.md
 │       ├── 01-database-schema.md
@@ -283,18 +361,17 @@ This is your main customization surface. After bootstrap, edit it to:
 - Configure **Testing Strategy** and test command
 - Add **Custom Rules** that supplement the protocol
 - Override roles per mode
+- Append to **Lessons Learned** (with user approval)
 
 Example:
 
 ```markdown
 ## Default Role
 Senior Rust Systems Engineer
-
 **Capabilities**: Memory Safety, Zero-Cost Abstractions, Systems Programming
 **Tone**: Precise, Technical, Safety-Conscious
 
 ## Project Archetype
-
 ### Stack Conventions
 - All unsafe blocks must have a `// SAFETY:` comment
 - Prefer `thiserror` over manual `impl Display for Error`
@@ -304,6 +381,20 @@ Senior Rust Systems Engineer
 - Test command: `cargo test`
 - Property-based testing with `proptest` for core algorithms
 ```
+
+### runner-config.sh (Runner-Level)
+
+Configure your AI CLI tool, rate limiting, and safety limits:
+
+```bash
+AI_CMD='gemini'           # Your AI CLI tool
+AI_PROMPT_FLAG='--prompt'  # How it accepts prompts
+MAX_TASKS=7              # Safety limit per run
+PAUSE_BETWEEN=2           # Seconds between sessions
+DRY_RUN=false             # Preview mode
+```
+
+Supports Gemini CLI, Claude Code CLI, Aider, or any custom tool.
 
 ### Spec Files (Task-Level)
 
@@ -334,7 +425,22 @@ Defined in `archy-protocol.md`, these are non-negotiable:
 3. **Filesystem is Truth** — Trust actual code over the plan
 4. **Brief vs. Elaborate** — Respect the user's requested verbosity
 5. **Spec-Lock** — No implementation without a detailed Spec
-6. **Protocol Immutability** — AI cannot modify the protocol file
+6. **Protocol Immutability** — AI cannot modify the protocol file; suggest changes to the user
+
+---
+
+## Auto-Healing Behaviors
+
+Archy includes built-in recovery mechanisms:
+
+| Condition | Action |
+|-----------|--------|
+| Spec references non-existent file | Triggers Architect Mode to create missing spec |
+| Test fails 3 consecutive times | HALTs, provides diagnostic summary, asks user for guidance |
+| Spec appears stale vs. codebase | Flags in output, suggests Maintenance Mode review |
+| Circular dependency in mission-control | HALTs, displays cycle, asks user to resolve |
+| Ambiguous or vague spec | HALTs Builder, switches to Architect to refine |
+| Missing `base-prompt.md` or `mission-control.md` | Triggers Bootstrap Mode |
 
 ---
 
@@ -351,9 +457,11 @@ Archy is designed to minimize AI context window consumption:
 | `specs/*.md` | Only the active task's spec | Varies |
 
 **Key design decisions for context efficiency:**
-- Templates split into separate file — not loaded during Builder/Maintenance
+
+- Templates split into a separate file — not loaded during Builder/Maintenance
 - Mission-control contains dependency declarations inline — no need to open specs just to determine task order
 - Specs are loaded one at a time — lazy loading
+- One task per session — fresh context prevents accumulation
 - Protocol contains no examples or templates — pure rules
 
 ---
@@ -362,7 +470,7 @@ Archy is designed to minimize AI context window consumption:
 
 ### Can I use Archy with Claude, ChatGPT, or other AI CLIs?
 
-Yes. Archy is model-agnostic. It's a markdown-based protocol. Any AI that can read files and follow instructions will work. The examples use `gemini` but substitute your CLI tool.
+Yes. Archy is model-agnostic. It's a markdown-based protocol. Any AI that can read files and follow instructions will work. The examples use `gemini` but substitute your CLI tool. Update `runner-config.sh` accordingly.
 
 ### What if the AI ignores the protocol?
 
@@ -374,7 +482,7 @@ Read and strictly follow @.archy/archy-protocol.md before doing anything.
 
 ### Can I have multiple projects sharing the same protocol?
 
-Yes — that's the design. Symlink `archy-protocol.md` and `archy-templates.md` from a central `docs-to-code` repo. Each project gets its own `base-prompt.md`, `mission-control.md`, and `specs/`.
+Yes — that's the design. Symlink `archy-protocol.md` and `archy-templates.md` from a central `docs-to-code` repo. Each project gets its own `base-prompt.md`, `mission-control.md`, `specs/`, and runner scripts.
 
 ### What if I want to change the protocol for one project only?
 
@@ -382,7 +490,7 @@ Copy instead of symlink. Then edit the copy freely. But consider putting project
 
 ### How do I add a feature mid-project?
 
-Set `Target_Task = "Plan [feature name]"` in `base-prompt.md` and run. Architect Mode will interview you, create specs, and update mission-control.
+Set `Target_Task = "Plan [feature name]"` in `base-prompt.md` and run. Architect Mode will interview you, create specs, and update mission-control with proper dependency declarations.
 
 ### How do I skip a task?
 
@@ -392,13 +500,21 @@ Mark it as `[~]` in `mission-control.md`. Builder Mode will skip it.
 
 Maintenance Mode detects stale specs and flags them. You can also manually trigger: `Target_Task = "Audit specs against codebase"`.
 
+### How does the runner handle failures?
+
+The runner checks each session's output for `Status: FAILED` or `Status: ESCALATED`. After 3 consecutive failures, it halts and directs you to `sessions.log` for details. On success, the failure counter resets.
+
+### Can I run the runner in preview mode?
+
+Yes: `./.archy/archy-runner.sh --dry-run` shows what would execute without actually launching AI sessions.
+
 ---
 
 ## Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 4.1.0 | 2026-02-10 | Role Composition system, dependency-driven task selection, Bootstrap Mode, protocol/templates split, protocol immutability, auto-healing behaviors, failure escalation, project brief template |
+| 4.1.0 | 2026-02-10 | Role Composition system, dependency-driven task selection, Bootstrap Mode, protocol/templates split, protocol immutability, auto-healing behaviors, failure escalation, project brief template, runner script generation, session boundaries & logging |
 | 4.0.0 | — | Initial "Mission Control" architecture — mode-based system, spec-driven development, file-based state |
 
 ---
@@ -412,6 +528,7 @@ AI agent, autonomous software engineering, spec-driven development, docs-driven 
 ## Credits
 
 Archy is a concept by **Ahmad Ez**.
+
 Docs-to-code (Archy protocol)
 v4.1 — *"Mission Control"*
 Designed for full automation with strategic human oversight.
