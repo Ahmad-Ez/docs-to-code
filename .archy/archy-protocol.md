@@ -245,9 +245,9 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 |------|------------|
 | **Spec** | A markdown file in `.archy/specs/` that fully defines a task's requirements, implementation steps, and verification criteria |
 | **Mission Control** | The central queue file (`mission-control.md`) that tracks all specs and their completion status |
-| **Base-Prompt** | The project-specific configuration file that launches Auto-Archy sessions and defines project context |
-| **Protocol** | This file — the immutable constitution that defines Auto-Archy's behavior |
-| **Templates** | The companion file (`archy-templates.md`) containing structural templates for all Auto-Archy artifacts |
+| **Base-Prompt** | The project-specific configuration file that launches Archy sessions and defines project context |
+| **Protocol** | This file — the immutable constitution that defines Archy's behavior |
+| **Templates** | The companion file (`archy-templates.md`) containing structural templates for all Archy artifacts |
 | **Artifact** | Any file created or modified as part of a spec's implementation |
 | **Iron Rules** | Non-negotiable directives that cannot be overridden by any other configuration |
 | **Bootstrap** | The first-run mode that generates all project scaffolding from a project brief |

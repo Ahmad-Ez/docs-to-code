@@ -1,6 +1,6 @@
-# 🤖 Archy (v4.1) — "Mission Control"
+# 🤖 Docs-to-Code (Archy Protocol) (v4.1) — "Mission Control"
 
-The AI Project Manager & Lead Engineer Protocol for CLI-based AI assistants.
+Docs-to-Code: Spec-locked, mission-control protocol for autonomous AI software engineering.
 
 ---
 
@@ -9,8 +9,8 @@ The AI Project Manager & Lead Engineer Protocol for CLI-based AI assistants.
 ```bash
 # 1. Copy protocol files into your project
 mkdir .archy
-cp ~/archy-core/archy-protocol.md .archy/
-cp ~/archy-core/archy-templates.md .archy/
+cp ~/docs-to-code/archy-protocol.md .archy/
+cp ~/docs-to-code/archy-templates.md .archy/
 
 # 2a. If you have a project brief:
 gemini "Read @.archy/archy-protocol.md and bootstrap this project based on @project-brief.md"
@@ -70,10 +70,10 @@ The user focuses on **strategy** (what to build and why). Archy handles **tactic
 
 ## Repository Contents
 
-This is the `archy-core` repo. It contains only what needs to be portable:
+This is the `docs-to-code` repo. It contains only what needs to be portable:
 
 ```
-archy-core/
+docs-to-code/
 ├── archy-protocol.md     # 🧠 The Constitution — runtime rules, modes, role system
 ├── archy-templates.md     # 📐 Templates — spec, mission-control, base-prompt, project brief
 └── README.md              # 📖 This file
@@ -97,11 +97,11 @@ cp archy-templates.md your-project/.archy/
 
 ```bash
 mkdir -p your-project/.archy
-ln -s ~/archy-core/archy-protocol.md your-project/.archy/archy-protocol.md
-ln -s ~/archy-core/archy-templates.md your-project/.archy/archy-templates.md
+ln -s ~/docs-to-code/archy-protocol.md your-project/.archy/archy-protocol.md
+ln -s ~/docs-to-code/archy-templates.md your-project/.archy/archy-templates.md
 ```
 
-With symlinks, updating `archy-core` updates all projects simultaneously. See [Context Efficiency](#context-efficiency) for trade-offs.
+With symlinks, updating `docs-to-code` updates all projects simultaneously. See [Context Efficiency](#context-efficiency) for trade-offs.
 
 ---
 
@@ -321,7 +321,7 @@ The protocol is designed to be **stable and generic**. It should not need per-pr
 
 - **Project-specific rules** → put them in `base-prompt.md` under Custom Rules
 - **Task-specific behavior** → put it in the spec file
-- **Genuine protocol improvement** → edit manually in `archy-core`, all symlinked projects benefit
+- **Genuine protocol improvement** → edit manually in `docs-to-code`, all symlinked projects benefit
 
 ---
 
@@ -374,7 +374,7 @@ Read and strictly follow @.archy/archy-protocol.md before doing anything.
 
 ### Can I have multiple projects sharing the same protocol?
 
-Yes — that's the design. Symlink `archy-protocol.md` and `archy-templates.md` from a central `archy-core` repo. Each project gets its own `base-prompt.md`, `mission-control.md`, and `specs/`.
+Yes — that's the design. Symlink `archy-protocol.md` and `archy-templates.md` from a central `docs-to-code` repo. Each project gets its own `base-prompt.md`, `mission-control.md`, and `specs/`.
 
 ### What if I want to change the protocol for one project only?
 
@@ -412,7 +412,7 @@ AI agent, autonomous software engineering, spec-driven development, docs-driven 
 ## Credits
 
 Archy is a concept by **Ahmad Ez**.
-
+Docs-to-code (Archy protocol)
 v4.1 — *"Mission Control"*
 Designed for full automation with strategic human oversight.
 

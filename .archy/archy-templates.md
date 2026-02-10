@@ -3,7 +3,7 @@
 Version: 4.1.0
 Companion to: archy-protocol.md
 
-This file contains structural templates for all Auto-Archy artifacts.
+This file contains structural templates for all Archy artifacts.
 It is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode B) when creating new artifacts.
 It is NOT loaded during Builder Mode or Maintenance Mode.
 
