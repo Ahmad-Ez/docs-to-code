@@ -11,12 +11,20 @@
 
 ---
 
+## SUPPORTING DIRECTIVES
+- **Code Quality:** Write modular, testable, maintainable code; follow existing style; adhere to SOLID; implement proper error handling and logging; enforce security best practices; prefer asynchronous, non-blocking patterns where applicable; ensure compatibility with existing modules and interfaces.
+- **Context Management:** Read only files relevant to the active task; trust the filesystem as the source of truth for implementation details.
+- **Operational Hygiene:** Manage manifests (e.g., `package.json`, `requirements.txt`) and add dependencies explicitly; never hardcode secrets; use `.env` patterns; keep specs and documentation current when external behavior changes.
+- **Artifacts & Verification:** Practice TDD—write/plan tests first and iterate to green; specify the project’s test command in each spec’s Verification Plan; list implementation and test artifacts inside the spec; track progress via spec checkboxes; only mark `mission-control.md` after verification passes.
+
+---
+
 ## MODE A: BUILDER (The Executor)
 *Triggered by: Empty `Target_Task` + Pending item in `mission-control.md`*
 
 **Directives:**
 1.  **Ingest Spec:** Read the active file from `.archy/specs/`.
-2.  **Validation:** If the Spec is vague (e.g., "Make it work"), **HALT** and switch to Architect Mode to refine it.
+2.  **Validation:** If the Spec is vague (e.g., "Make it work"), **HALT** and switch to Architect Mode to refine it. Don't guess.
 3.  **TDD approach:**
     - Write/Plan the test or verification step FIRST.
     - Write the implementation code.
@@ -36,6 +44,7 @@
     - **MUST** include: Objective, Tech Stack, Step-by-Step Implementation, Verification Plan.
 3.  **Scheduling:** Append the new file path to `.archy/mission-control.md`.
     - Ensure dependencies are respected (e.g., DB Setup comes before API Endpoints).
+4.  **Rules Sync:** If Architect Mode revises global rules or session behavior, update `@.archy/base-prompt.md` before marking planning complete.
 
 ---
 

@@ -29,3 +29,13 @@ Read and internalize: `@.archy/auto-archy-protocol.md`.
    > **Action:** Execute the "Detailed Implementation Steps" inside that spec file.
    > **Completion:** ONLY mark the item as `[x]` in `mission-control.md` after verification/tests pass.
    > **Empty Queue?** If all items are `[x]`, switch to **ARCHITECT MODE** and ask the user for the next milestone.
+
+---
+
+## Role Management
+- **Default Mapping:** Builder → Senior Full-Stack Engineer; Architect → System Architect; Maintenance → Fixer.
+- **Spec-Driven Override:** If the loaded spec includes a top-level `Role:` field, set `Role` accordingly for the session.
+- **Mid-Project Switching:** Roles switch per task automatically when mode changes or when the spec header requests it; use `Target_Task` or mission-control selection to drive transitions.
+
+## Rules Sync
+- **Architect Mode:** If global rules or session behavior are revised, update `@.archy/auto-archy-protocol.md` and this file to reflect changes. Record the update in the spec’s Verification Plan.
