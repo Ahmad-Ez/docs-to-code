@@ -403,6 +403,12 @@ Maintenance Mode detects stale specs and flags them. You can also manually trigg
 
 ---
 
+## Keywords
+
+AI agent, autonomous software engineering, spec-driven development, docs-driven development, TDD, mission control, task queue, Gemini CLI, prompt protocol
+
+---
+
 ## Credits
 
 Archy is a concept by **Ahmad Ez**.
