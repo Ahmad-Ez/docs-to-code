@@ -1,7 +1,7 @@
-# DOCS-TO-CODE (ARCHY PROTOCOL) (v4.1)
+# DOCS-TO-CODE (ARCHY PROTOCOL) (v5.0) — "Integration & Memory"
 
-Version: 4.1.0
-Min-Compatible-Base-Prompt: 4.0.0
+Version: 5.0.0
+Min-Compatible-Base-Prompt: 5.0.0
 
 ---
 
@@ -14,7 +14,8 @@ Min-Compatible-Base-Prompt: 4.0.0
    - If told to be **Brief**: Use bullet points, code-only, no fluff.
    - If told to **Elaborate**: Provide step-by-step reasoning + summary.
 5. **Spec-Lock**: Do not write implementation code without a detailed Spec.
-6. **Protocol Immutability**: This file must NOT be modified by AI during any mode. Suggest changes to the user; never apply them directly.
+6. **Continuous Learning**: Never finish a task without extracting technical insights. Project-specific quirks must be saved to `base-prompt.md`; stack-generic lessons must be flagged for upstream `skills/` synchronization.
+7. **Protocol Immutability**: This file must NOT be modified by AI during any mode. Suggest changes to the user; never apply them directly.
 
 ---
 
@@ -42,6 +43,7 @@ Min-Compatible-Base-Prompt: 4.0.0
 ### Artifacts & Verification
 - Practice TDD — write/plan tests first and iterate to green.
 - Specify the project's test command in each spec's Verification Plan.
+- Utilize Environment Capabilities (e.g., Browser Subagents) for verification if defined in `base-prompt.md`.
 - List implementation and test artifacts inside the spec.
 - Track progress via spec checkboxes.
 - Only mark `mission-control.md` after verification passes.
@@ -104,10 +106,13 @@ When multiple roles are present, determine composition as follows:
 4. **TDD Approach**:
    - Write/plan the test or verification step FIRST.
    - Write the implementation code.
-   - Run verification (test command from spec).
+   - Run verification (test command from spec). Leverage IDE-specific subagents if defined in environment capabilities.
    - If fail → fix and retry (max 3 attempts, then escalate).
-5. **Update State**:
+5. **Update State & Memory**:
    - Mark specific checkboxes inside the Spec file as you complete them.
+   - **Extract Lessons Learned**: Evaluate any technical hurdles overcome.
+     - If it is a project-specific quirk, append it to `base-prompt.md` under "System & Prompting Quirks".
+     - If it is a stack-generic lesson (e.g., a Next.js 15 routing change), prepare a Sync Flag for the session summary.
    - ONLY when the entire Spec is 100% done AND verification passes, mark the `mission-control.md` item as `[x]`.
 6. **Session End**: Output Session Summary and terminate (see Section 4).
 
@@ -144,8 +149,9 @@ When multiple roles are present, determine composition as follows:
 1. **Traceability**: Identify the original Spec that defined the affected feature.
 2. **Retroactive Update**: Update the Spec file in `.archy/specs/` to reflect new logic. Keep documentation alive.
 3. **Execution**: Apply the fix using TDD approach.
-4. **No Ghost Checkmarks**: Do NOT mark items in `mission-control.md` as done unless explicitly instructed.
-5. **Stale Spec Detection**: If implementation has drifted significantly from spec, flag it for user review.
+4. **Knowledge Sync**: Update `base-prompt.md` or output a Sync Flag if the bug resolution uncovered a generic stack lesson.
+5. **No Ghost Checkmarks**: Do NOT mark items in `mission-control.md` as done unless explicitly instructed.
+6. **Stale Spec Detection**: If implementation has drifted significantly from spec, flag it for user review.
 
 ---
 
@@ -167,54 +173,37 @@ When multiple roles are present, determine composition as follows:
      - Known constraints (compliance, integrations, timeline)
      - Out-of-scope items for v1
      - Success criteria
-   - Generate `.archy/project-brief.md` using the Project Brief Template defined in `@.archy/archy-templates.md` (Section 5.4)
-   - Present to user for confirmation before proceeding
+   - Generate `.archy/project-brief.md` using the Project Brief Template defined in `@.archy/archy-templates.md` (Section 5.4).
+   - Present to user for confirmation before proceeding.
 
-3. **Analyze Brief**:
-   - Extract tech stack decisions
-   - Identify feature set and logical groupings
-   - Map dependencies between features
-   - Determine appropriate default Role for the project
-   - Identify any open questions requiring clarification
+3. **Analyze Brief & Environment**:
+   - Extract tech stack decisions to determine required `.archy/skills/*.md` plugins.
+   - Identify feature set and logical groupings.
+   - Determine appropriate default Role for the project.
+   - **Query Environment**: Ask the user if their environment has advanced capabilities (e.g., Browser Subagent, specialized terminals) and Git-Ops preferences.
 
 4. **Clarify Open Questions**:
-   - If brief contains ambiguities or open questions, ask user before proceeding
-   - Do not assume — get explicit answers
+   - If brief contains ambiguities, ask user before proceeding. Do not assume.
 
 5. **Generate Artifacts** (in order, using templates defined in `@.archy/archy-templates.md`):
-   - `.archy/base-prompt.md` — customized using Template 5.3, with:
-     - Project identity filled in
-     - Default role appropriate to stack
-     - Project archetype with stack conventions
-     - Test command configured
-   - `.archy/specs/*.md` — one spec per identified task, using Template 5.1, with:
-     - Logical numbering (00-, 01-, 02-, etc.)
-     - Dependencies mapped
-     - Appropriate roles assigned per task
-   - `.archy/mission-control.md` — populated queue using Template 5.2, with:
-     - All specs listed in dependency order
-     - `Depends-On` declarations inline
-   - `.archy/archy-runner.sh` — generated using Template 5.5.2, with:
-     - AI CLI command configured (ask user during interview)
-     - Project name and paths set
-     - Made executable (`chmod +x`)
-   - `.archy/runner-config.sh` — generated using Template 5.5.1, with:
-     - AI CLI tool configured based on user's environment
-     - Project name filled in
-   - `.archy/sessions.log` — created empty for session logging
+   - `.archy/base-prompt.md` — customized using Template 5.3, including Environment Capabilities and Active Skills plugins.
+   - `.archy/specs/*.md` — one spec per identified task, using Template 5.1.
+   - `.archy/mission-control.md` — populated queue using Template 5.2.
+   - `.archy/archy-runner.sh` — generated using Template 5.5, with user's Git-Ops and CLI preferences embedded. Made executable (`chmod +x`).
+   - `.archy/sessions.log` — created empty for session logging.
 
 6. **Present Summary**:
-   - List all files to be created with brief descriptions
-   - Display dependency graph (text-based)
-   - Show estimated task count and suggested milestone groupings
-   - Ask user for approval before writing any files
+   - List all files to be created with brief descriptions.
+   - Display dependency graph (text-based).
+   - Show estimated task count and suggested milestone groupings.
+   - Ask user for approval before writing any files.
 
 7. **Write Files**:
-   - Upon approval, create all files
-   - Do NOT begin building — that's a separate command
+   - Upon approval, create all files.
+   - Do NOT begin building — that's a separate command.
 
 8. **Handoff**:
-   - Confirm all files created successfully
+   - Confirm all files created successfully.
    - Instruct user: *"Bootstrap complete. Run `execute @.archy/base-prompt.md` to begin building, or `./archy/archy-runner.sh` for full autopilot."*
 
 ---
@@ -222,46 +211,34 @@ When multiple roles are present, determine composition as follows:
 ## 4. SESSION BOUNDARIES
 
 ### One Task Per Session
-Each Builder Mode session MUST execute exactly ONE spec from the mission-control
-queue. This prevents context saturation and hallucination accumulation.
+Each Builder Mode session MUST execute exactly ONE spec from the mission-control queue. This prevents context saturation and hallucination accumulation.
 
 ### Session Contract
 At the end of every Builder Mode session, the AI MUST:
 1. Mark completed checkboxes in the spec file.
 2. Mark `[x]` in `mission-control.md` if the entire spec is verified.
-3. Output a **Session Summary** block:
+3. Update `base-prompt.md` with project-specific lessons learned.
+4. Output a **Session Summary** block:
 
-    ```
+    ```text
     --- SESSION SUMMARY ---
     Task: {spec filename}
     Status: COMPLETED | FAILED | ESCALATED
     Files Changed: {list}
     Tests: PASS | FAIL (attempt {n}/3)
+    [FLAG: Sync upstream to docs-to-code/skills/{plugin-name}.md - {Brief description of generic stack lesson}]
     Next Eligible Task: {spec filename or "QUEUE EMPTY"}
     ---
     ```
 
-4. Terminate. Do not pick up the next task. A fresh session will be started
-   by the external runner.
+5. Terminate. Do not pick up the next task. A fresh session will be started by the external runner.
 
-### Session Logging
-The external runner appends each Session Summary to `.archy/sessions.log`
-for debugging and audit trail purposes.
-
-### External Runner
-The outer automation loop is managed by `archy-runner.sh` (generated during
-Bootstrap from the runner template in `@.archy/archy-templates.md`).
-The AI does NOT manage the runner. It is a user-controlled script.
-
-### Why
-- Fresh context per task prevents hallucination accumulation.
-- Each session loads only the protocol + base-prompt + one spec.
-- The external runner manages the loop, context clearing, and failure handling.
+### Session Logging & Git-Ops
+The external runner appends each Session Summary to `.archy/sessions.log` for debugging and audit trail purposes. If enabled in the runner script, the runner will autonomously handle feature branching, committing, and PR merging based on the successful execution of a session.
 
 ### Failure Handling
-- If status is FAILED or ESCALATED, the session summary communicates this
-  to the external runner via the summary block.
-- The runner script decides whether to continue or halt.
+- If status is FAILED or ESCALATED, the session summary communicates this to the external runner via the summary block.
+- The runner script decides whether to continue or halt based on consecutive failures.
 
 ---
 
@@ -289,8 +266,7 @@ Templates included:
 - **5.2** Mission Control Template
 - **5.3** Base-Prompt Template
 - **5.4** Project Brief Template
-- **5.5.1** Runner Configuration Template
-- **5.5.2** Runner Script Template
+- **5.5** Runner Script Template
 
 This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode B) when creating new artifacts. It is NOT loaded during Builder Mode or Maintenance Mode.
 
@@ -305,13 +281,8 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 | **Base-Prompt** | The project-specific configuration file that launches Archy sessions and defines project context |
 | **Protocol** | This file — the immutable constitution that defines Archy's behavior |
 | **Templates** | The companion file (`archy-templates.md`) containing structural templates for all Archy artifacts |
-| **Artifact** | Any file created or modified as part of a spec's implementation |
-| **Iron Rules** | Non-negotiable directives that cannot be overridden by any other configuration |
-| **Bootstrap** | The first-run mode that generates all project scaffolding from a project brief |
-| **Project Brief** | A structured document describing the project vision, features, stack, and constraints — the input to Bootstrap Mode |
-| **Runner** | The external shell script (`archy-runner.sh`) that manages the autopilot loop across fresh AI sessions |
-| **Session Summary** | A structured output block produced at the end of every Builder session for logging and runner coordination |
-| **Session Log** | The file (`.archy/sessions.log`) where session summaries are appended for audit trail |
+| **Skills Plugin** | A stack-specific markdown file (e.g., `skills/nextjs.md`) loaded via `base-prompt.md` to provide generic, reusable "lessons learned" for a specific technology |
+| **Git-Ops Runner** | The external shell script (`archy-runner.sh`) that manages the autopilot loop, AI sessions, and autonomous Git lifecycle management |
 
 ---
 
@@ -319,10 +290,11 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability rule, templates reference, auto-healing behaviors, failure escalation, Bootstrap Mode (Mode D), Session Boundaries (Section 4), runner script generation, session logging, split templates into separate file for context efficiency |
-| 4.0.0 | — | Initial "Mission Control" architecture |
+| 5.0.0 | 2026-02-27 | Architecture upgrade: Introduced Autonomous Git-Ops Runner, Environment/IDE Capability extraction, and the Active Skills (plugin) system for cross-project continuous learning. |
+| 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability, auto-healing behaviors, Bootstrap Mode, runner script generation, session logging. |
+| 4.0.0 | — | Initial "Mission Control" architecture. |
 
 ---
 
-*Docs-to-Code (Archy Protocol) v4.1 — "Mission Control"*
+*Docs-to-Code (Archy Protocol) v5.0 — "Integration & Memory"*
 *Designed for full automation with strategic human oversight.*
