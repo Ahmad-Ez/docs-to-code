@@ -93,8 +93,8 @@ Symlink the core rules so updating `docs-to-code` updates all your projects simu
 
 ```bash
 mkdir -p your-project/.archy
-ln -s ~/docs-to-code/archy-protocol.md your-project/.archy/archy-protocol.md
-ln -s ~/docs-to-code/archy-templates.md your-project/.archy/archy-templates.md
+ln -s ~/docs-to-code/.archy/archy-protocol.md your-project/.archy/archy-protocol.md
+ln -s ~/docs-to-code/.archy/archy-templates.md your-project/.archy/archy-templates.md
 
 ```
 
@@ -102,8 +102,8 @@ ln -s ~/docs-to-code/archy-templates.md your-project/.archy/archy-templates.md
 
 ```bash
 mkdir -p your-project/.archy
-cp ~/docs-to-code/archy-protocol.md your-project/.archy/
-cp ~/docs-to-code/archy-templates.md your-project/.archy/
+cp ~/docs-to-code/.archy/archy-protocol.md your-project/.archy/
+cp ~/docs-to-code/.archy/archy-templates.md your-project/.archy/
 
 ```
 
@@ -111,7 +111,7 @@ cp ~/docs-to-code/archy-templates.md your-project/.archy/
 
 ---
 
-## 🧠 The Skills Architecture (Memory)
+## The Skills Architecture (Memory)
 
 In older versions, `base-prompt.md` became bloated with generic lessons. Since V5, knowledge is separated into two tiers:
 
@@ -161,12 +161,12 @@ AUTO_MERGE=false             # Push for human PR review
 
 ---
 
-## 🤖 Subagent Delegation
+## Subagent Delegation
 
 When using AI tools that support subagents (e.g., Claude Code with `.claude/agents/`), Archy can delegate each mode to a specialized agent:
 
 | Mode | Agent File | Behavior |
-|------|-----------|----------|
+| ------ | ---------- | -------- |
 | ARCHITECT | `.claude/agents/archy-architect.md` | Plans features, creates specs |
 | BUILDER | `.claude/agents/archy-builder.md` | Executes one spec with TDD |
 | REVIEWER | `.claude/agents/spec-reviewer.md` | Verifies implementation against spec |
@@ -302,7 +302,6 @@ Mark it as `[~]` in `mission-control.md`. Builder Mode will skip it.
 ### What if specs get out of sync with code?
 
 Maintenance Mode detects stale specs and flags them. You can also manually trigger: `Target_Task = "Audit specs against codebase"`.
-
 
 ---
 
