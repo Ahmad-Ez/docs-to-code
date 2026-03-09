@@ -1,4 +1,4 @@
-# 🤖 Docs-to-Code (Archy Protocol) (v5.0) — "Integration & Memory"
+# 🤖 Docs-to-Code (Archy Protocol) (v6.0) — "Delegation & Discipline"
 
 Docs-to-Code: A spec-locked, autonomous AI software engineering protocol with continuous learning, environment awareness, and Git-Ops automation.
 
@@ -9,11 +9,13 @@ Docs-to-Code: A spec-locked, autonomous AI software engineering protocol with co
 ```bash
 # 1. Copy protocol files into your project
 mkdir .archy
-cp ~/docs-to-code/archy-protocol.md .archy/
-cp ~/docs-to-code/archy-templates.md .archy/
+cp ~/docs-to-code/.archy/archy-protocol.md .archy/
+cp ~/docs-to-code/.archy/archy-templates.md .archy/
 
 # 2a. If you have a project brief:
 gemini "Read @.archy/archy-protocol.md and bootstrap this project based on @project-brief.md"
+# Or with Claude Code:
+# claude "Read @.archy/archy-protocol.md and bootstrap this project based on @project-brief.md"
 
 # 2b. If you don't have a brief yet:
 gemini "Read @.archy/archy-protocol.md and bootstrap this project"
@@ -28,13 +30,14 @@ gemini "execute @.archy/base-prompt.md"
 
 ---
 
-## 🚀 What's New in V5?
+## 🚀 What's New in V6?
 
-V5 transforms Archy from a stateless code generator into an environment-aware, version-controlling integration agent.
+V6 adds intelligent delegation and context discipline — making Archy work better with AI tools that support subagents (like Claude Code) while staying fully functional in single-agent environments (like Gemini CLI).
 
-1. **Stack Memory (Skills Plugins)**: Archy now extracts generic framework lessons (e.g., Next.js quirks, Prisma mocking) and flags them for synchronization to reusable `.archy/skills/*.md` files. You can drop these plugins into new projects to grant Archy "veteran" status on Day 1.
-2. **Autonomous Git-Ops Runner**: The external runner script can now autonomously branch from `dev`, commit completed features, and (optionally) merge them back, fully managing the Git lifecycle.
-3. **Environment Capabilities**: Archy now queries your IDE capabilities during Bootstrap (e.g., Antigravity Browser Subagents, Cursor rules) and leverages them during the Verification phase of a spec.
+1. **Subagent Delegation (Optional)**: Builder, Architect, and Reviewer modes can now be delegated to specialized subagents (e.g., `.claude/agents/archy-builder.md`) when the host environment supports them. Falls back to inline execution seamlessly.
+2. **Conditional Skill Loading**: Skills are no longer loaded all-at-once. The base-prompt now contains a menu with "Load when..." hints, so the AI loads only what's relevant to the current task — saving context window space.
+3. **Quirks Cap (Max 5)**: The "System & Prompting Quirks" section in base-prompt is now capped at 5 entries. Overflow is archived to the relevant `.archy/skills/*.md` file, preventing prompt bloat.
+4. **Claude Code Agent Templates**: Bootstrap Mode now generates `.claude/agents/` definitions when the environment is Claude Code, enabling native subagent spawning.
 
 ---
 
@@ -45,6 +48,7 @@ V5 transforms Archy from a stateless code generator into an environment-aware, v
 * [Installation](#installation)
 * [The Skills Architecture (Memory)](#the-skills-architecture-memory)
 * [Autonomous Git-Ops (Runner)](#autonomous-git-ops-runner)
+* [Subagent Delegation](#subagent-delegation)
 * [Modes Overview](#modes-overview)
 * [Usage Guide](#usage-guide)
 * [The Role System](#the-role-system)
@@ -72,11 +76,10 @@ This is the `docs-to-code` root repo. It contains only what needs to be portable
 
 ```text
 docs-to-code/
-├── archy-protocol.md     # 🧠 The Constitution — runtime rules, continuous learning loop
-├── archy-templates.md    # 📐 Templates — specs, queues, base-prompt, skills, runner
-├── SOPs.md               # 🌿 Generic Git Workflow SOP
-├── skills/               # 🎒 Veteran Knowledge Plugins (e.g., nextjs.md, prisma.md)
-└── README.md             # 📖 This file
+├── .archy/
+│   ├── archy-protocol.md     # 🧠 The Constitution — runtime rules, continuous learning loop
+│   └── archy-templates.md    # 📐 Templates — specs, queues, base-prompt, skills, agents, runner
+├── README.md                 # 📖 This file
 
 ```
 
@@ -108,15 +111,27 @@ cp ~/docs-to-code/archy-templates.md your-project/.archy/
 
 ---
 
-## The Skills Architecture (Memory)
+## 🧠 The Skills Architecture (Memory)
 
-In older versions, `base-prompt.md` became bloated with generic lessons. In V5, knowledge is separated into two tiers:
+In older versions, `base-prompt.md` became bloated with generic lessons. Since V5, knowledge is separated into two tiers:
 
-1. **System & Prompting Quirks (`base-prompt.md`)**: Project-specific environmental issues (e.g., "In this specific Docker container, use port 51214"). Archy appends these automatically.
-2. **Active Skills (`.archy/skills/*.md`)**: Generic, reusable stack knowledge (e.g., "Next.js 15 Server Components routing quirks").
+1. **System & Prompting Quirks (`base-prompt.md`)**: Project-specific environmental issues. **Capped at 5 entries** — overflow must be archived to skill files.
+2. **Active Skills (`.archy/skills/*.md`)**: Generic, reusable stack knowledge organized by topic.
+
+**V6 Change — Conditional Loading:**
+Skills are no longer blindly loaded every session. The base-prompt now contains a menu table:
+
+```markdown
+| Skill | File | Load when... |
+|-------|------|--------------|
+| i18n | `@.archy/skills/i18n-intl.md` | Translation, locale, RTL work |
+| React | `@.archy/skills/react-components.md` | Component, JSX, hydration |
+```
+
+The AI reads the table and loads only the skills matching the current task. This keeps context usage proportional to task complexity.
 
 **The Sync Loop:**
-When Archy learns a generic stack lesson, it outputs a `[FLAG: Sync upstream...]` in its Session Summary. You, the human, then copy that lesson back to the master `docs-to-code/skills/` repo so all future projects inherit the knowledge.
+When Archy learns a generic stack lesson, it saves it directly to the relevant local skill file and outputs a `[FLAG: Sync upstream...]` in its Session Summary. You then copy that lesson back to the master `docs-to-code/skills/` repo so all future projects inherit it.
 
 ---
 
@@ -127,7 +142,7 @@ The runner (`archy-runner.sh`) is generated during Bootstrap. It isolates every 
 Edit the top of the script to configure it:
 
 ```bash
-AI_CMD='gemini'              # e.g., gemini, claude, aider
+AI_CMD='gemini'              # e.g., gemini, claude, aider, cursor
 AUTO_GIT=true                # Enable Git-Ops
 AUTO_CREATE_BRANCH=true      # Auto-branch from dev (feature/spec-id)
 AUTO_COMMIT=true             # Auto-commit on pass
@@ -143,6 +158,23 @@ AUTO_MERGE=false             # Push for human PR review
 ./.archy/archy-runner.sh --max 5      # Limit to 5 tasks
 
 ```
+
+---
+
+## 🤖 Subagent Delegation
+
+When using AI tools that support subagents (e.g., Claude Code with `.claude/agents/`), Archy can delegate each mode to a specialized agent:
+
+| Mode | Agent File | Behavior |
+|------|-----------|----------|
+| ARCHITECT | `.claude/agents/archy-architect.md` | Plans features, creates specs |
+| BUILDER | `.claude/agents/archy-builder.md` | Executes one spec with TDD |
+| REVIEWER | `.claude/agents/spec-reviewer.md` | Verifies implementation against spec |
+| MAINTENANCE | *(none)* | Always inline — scope too varied |
+
+**This is optional.** If no subagents are available (Gemini CLI, Aider, etc.), all modes execute inline as before. The base-prompt's System Logic section handles this with an if/else fallback.
+
+During Bootstrap, Archy generates these agent files automatically when it detects Claude Code as the environment.
 
 ---
 
@@ -225,6 +257,11 @@ my-project/
 │   └── specs/                  # The Blueprints
 │       ├── 00-db-schema.md
 │       └── 01-auth-api.md
+├── .claude/                    # Claude Code only (optional)
+│   └── agents/
+│       ├── archy-architect.md
+│       ├── archy-builder.md
+│       └── spec-reviewer.md
 ├── src/
 └── package.json
 
@@ -234,8 +271,8 @@ my-project/
 
 ## FAQ
 
-**Can I use Archy with Claude or Aider?**
-Yes. Archy is a markdown-based protocol. Update `AI_CMD` in `archy-runner.sh` to match your CLI tool.
+**Can I use Archy with Claude Code, Gemini CLI, or Aider?**
+Yes. Archy is a markdown-based protocol that works with any AI tool. Update `AI_CMD` in `archy-runner.sh` to match your CLI. Claude Code users get bonus features: native subagent delegation via `.claude/agents/` files generated during Bootstrap.
 
 **How does Archy know how to use my IDE's browser subagent?**
 During Bootstrap, Archy asks about your environment. It injects the `Environment & Capabilities` block into your `base-prompt.md`. Builder Mode reads this and incorporates it into the Verification phase.
@@ -273,6 +310,7 @@ Maintenance Mode detects stale specs and flags them. You can also manually trigg
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional), conditional skill loading, quirks cap, Claude Code agent templates. |
 | 5.0.0 | 2026-02-27 | **"Integration & Memory"**: Introduced Autonomous Git-Ops Runner, IDE/Environment Capability extraction, and the Active Skills plugin system. |
 | 4.1.0 | 2026-02-10 | Role Composition, Auto-Healing, split templates, runner generation. |
 | 4.0.0 | — | Initial "Mission Control" queue architecture. |
@@ -281,7 +319,7 @@ Maintenance Mode detects stale specs and flags them. You can also manually trigg
 
 ## Keywords
 
-AI agent, autonomous software engineering, spec-driven development, docs-driven development, TDD, mission control, task queue, Gemini CLI, prompt protocol
+AI agent, autonomous software engineering, spec-driven development, docs-driven development, TDD, mission control, task queue, Gemini CLI, prompt protocol, Claude Code, subagents, conditional loading
 
 ---
 
@@ -289,7 +327,7 @@ AI agent, autonomous software engineering, spec-driven development, docs-driven 
 
 Archy is a concept by **Ahmad Ez**.
 
-*Docs-to-Code (Archy Protocol) v5.0 — "Integration & Memory"*
+*Docs-to-Code (Archy Protocol) v6.0 — "Delegation & Discipline"*
 *Designed for full automation with strategic human oversight.*
 
 ---

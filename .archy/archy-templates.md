@@ -1,6 +1,6 @@
-# DOCS-TO-CODE (ARCHY TEMPLATES) (v5.0)
+# DOCS-TO-CODE (ARCHY TEMPLATES) (v6.0)
 
-Version: 5.0.0
+Version: 6.0.0
 Companion to: archy-protocol.md
 
 This file contains structural templates for all Archy artifacts.
@@ -192,20 +192,38 @@ Estimated-Effort: {optional: time estimate}
 
 ## Active Skills (Stack Memory)
 
-{Reference generic stack plugins here to inject community/veteran knowledge into the context window.}
-- Read `@.archy/skills/{plugin-name}.md`
+*Load ONLY the skills relevant to the current task. Do not read all files.*
+
+| Skill | File | Load when... |
+|-------|------|--------------|
+| {skill name} | `@.archy/skills/{file}.md` | {brief trigger description} |
 
 ---
 
 ## System & Prompting Quirks (Project Memory)
+<!-- MAX: 5 entries. Overflow MUST be moved to the relevant skill file. Generic stack lessons go directly to skills, not here. -->
 
-{Project-specific lessons learned. AI-Appendable. Generic stack lessons should NOT go here; they go to skills plugins.}
-
-- {date}: {project-specific quirk discovered during development}
+- {date}: {project-specific quirk}
 
 ---
 
 ## 🚀 SYSTEM LOGIC
+
+### Subagent Delegation (Optional)
+
+If the host environment supports spawning specialized subagents (e.g., `.claude/agents/` in Claude Code), **delegate** each mode to its matching agent instead of executing inline:
+
+| Mode | Subagent | Fallback |
+|------|----------|----------|
+| ARCHITECT | `archy-architect` | Execute architect steps inline |
+| BUILDER | `archy-builder` | Execute builder steps inline |
+| MAINTENANCE | *(none — always inline)* | Execute directly |
+
+After a Builder subagent completes, spawn `spec-reviewer` to verify the implementation against its spec before marking it done.
+
+If subagents are **not** available, proceed inline as described below.
+
+---
 
 ### Step 1: Load Constitution
 Read and internalize: `@.archy/archy-protocol.md`
@@ -215,17 +233,18 @@ Read and internalize: `@.archy/archy-protocol.md`
 **IF** `Target_Task` is NOT empty:
 - **ACTIVATE**: MAINTENANCE or ARCHITECT MODE (based on task nature)
 - **Context**: Load `@.archy/mission-control.md` (read-only for context)
-- **Action**: Execute `Target_Task` immediately
+- **Action**: Execute `Target_Task` immediately (or delegate to the appropriate subagent)
 - **Rule**: If task changes system logic, update the relevant spec file before finishing
 
 **ELSE** (Target_Task is empty):
 - **ACTIVATE**: BUILDER MODE (AUTOPILOT)
 - **Context**: Read `@.archy/mission-control.md`
-- **Logic**: 
+- **Logic**:
   1. Parse `Depends-On` declarations
   2. Find first `[ ]` item with all dependencies satisfied (`[x]`)
   3. Load the referenced spec file
-- **Action**: Execute the Implementation Steps inside that spec
+- **Action**: Execute the spec (or delegate to the builder subagent)
+- **Review**: After implementation, verify against the spec (or delegate to the reviewer subagent)
 - **Completion**: Mark `[x]` in mission-control ONLY after verification passes
 - **Session End**: Output Session Summary block and terminate (see Protocol Section 4)
 - **Empty Queue?**: If all items are `[x]`, switch to ARCHITECT MODE and ask user for next milestone
@@ -668,6 +687,108 @@ log_session "RUN COMPLETE — Completed: $COMPLETED, Failed: $FAILED, Time: ${MI
 
 ---
 
+## 5.7 Claude Code Agent Definition Templates
+
+*Generated during Bootstrap ONLY if the environment is Claude Code. Skip for other AI tools.*
+
+### archy-architect.md
+
+````markdown
+---
+name: archy-architect
+description: Plans new features by creating detailed spec files for the Archy protocol
+tools: Read, Write, Edit, Glob, Grep
+---
+
+You are an **Architect** in the Archy docs-to-code protocol.
+
+## Context
+
+- Read `.archy/project-brief.md` for project vision and constraints
+- Read `.archy/mission-control.md` for current queue state
+- Read existing specs in `.archy/specs/` for patterns and numbering
+
+## Process
+
+1. **Interrogate** — Ask clarifying questions about scope, edge cases, and integration points. Do not guess.
+2. **Draft spec** in `.archy/specs/` with:
+   - META: Role, Depends-On, Effort estimate
+   - Objective with success criteria
+   - Implementation steps (checkboxed)
+   - Verification plan with test commands
+   - Artifacts list
+3. **Schedule** — Append to `.archy/mission-control.md` respecting dependency order
+4. If prerequisites don't exist, create those specs first
+
+## Rules
+
+- Number specs sequentially based on existing highest number
+- Keep specs focused — one feature per spec
+- Assign appropriate roles (e.g., +Security Auditor for auth features)
+````
+
+### archy-builder.md
+
+````markdown
+---
+name: archy-builder
+description: Executes one spec from mission-control following the Archy docs-to-code protocol
+tools: Read, Write, Edit, Bash, Grep, Glob
+---
+
+You are a **Builder** in the Archy docs-to-code protocol.
+
+## Context
+
+- Read `.archy/archy-protocol.md` Section 3 MODE A for full rules
+- Read `.archy/base-prompt.md` for project conventions and stack details
+- Load only the skill files relevant to this spec from `.archy/skills/`
+
+## Process
+
+1. Read the assigned spec file from `.archy/specs/`
+2. Apply Role Composition Rules from the protocol
+3. Follow TDD: write/plan tests first, then implement, then verify
+4. Check off implementation steps as you complete them
+5. Run the verification plan (test command from spec)
+6. Extract lessons learned → project quirks to base-prompt, stack lessons to skill files
+7. Mark spec as complete in `.archy/mission-control.md`
+
+## Rules
+
+- ONE spec per session — do not pick up the next task
+- Halt after 3 consecutive test failures and escalate
+- Do not modify files outside the spec's scope without justification
+````
+
+### spec-reviewer.md
+
+````markdown
+---
+name: spec-reviewer
+description: Reviews implementation against its spec, checking for gaps and regressions
+tools: Read, Grep, Glob, Bash
+---
+
+You are a **Spec Reviewer** in the Archy docs-to-code protocol.
+
+## Process
+
+1. Read the spec file and identify all success criteria
+2. Read the implementation artifacts listed in the spec
+3. Run the verification plan commands
+4. Check every implementation step checkbox claim against actual code
+5. Report: PASS (all criteria met) or FAIL (list gaps)
+
+## Rules
+
+- Do NOT fix code — only report findings
+- Be objective and thorough
+- Check for regressions in files adjacent to changed code
+````
+
+---
+
 ## TEMPLATE USAGE REFERENCE
 
 | Template | Used By | When |
@@ -678,6 +799,7 @@ log_session "RUN COMPLETE — Completed: $COMPLETED, Failed: $FAILED, Time: ${MI
 | 5.4 Project Brief | Bootstrap Mode | When no brief exists and user needs guided interview |
 | 5.5 Skills Plugin | Bootstrap Mode, Maintenance | Creating reusable stack-specific knowledge modules |
 | 5.6 Runner Script | Bootstrap Mode | Initial project scaffolding |
+| 5.7 Claude Code Agents | Bootstrap Mode | When environment is Claude Code — generates `.claude/agents/` definitions |
 
 ---
 
@@ -685,10 +807,11 @@ log_session "RUN COMPLETE — Completed: $COMPLETED, Failed: $FAILED, Time: ${MI
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 6.0.0 | 2026-03-09 | Conditional skill loading in base-prompt, subagent delegation in system logic, quirks cap (max 5), Claude Code agent templates (5.7). |
 | 5.0.0 | 2026-02-27 | Added Environment & Capabilities and Active Skills to Base-Prompt. Merged Runner Config into Runner Script and added Git-Ops features. Added Skills Plugin Template. |
 | 4.1.0 | 2026-02-10 | Initial split from archy-protocol.md; added Project Brief template, Runner Script template, session logging. |
 
 ---
 
-*Docs-to-Code (Archy Templates) v5.0 — Companion to Archy Protocol*
+*Docs-to-Code (Archy Templates) v6.0 — Companion to Archy Protocol*
 *Loaded on-demand. Not required during Builder or Maintenance sessions.*
