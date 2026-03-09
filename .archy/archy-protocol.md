@@ -1,7 +1,7 @@
-# DOCS-TO-CODE (ARCHY PROTOCOL) (v5.0) — "Integration & Memory"
+# DOCS-TO-CODE (ARCHY PROTOCOL) (v6.0) — "Delegation & Discipline"
 
-Version: 5.0.0
-Min-Compatible-Base-Prompt: 5.0.0
+Version: 6.0.0
+Min-Compatible-Base-Prompt: 6.0.0
 
 ---
 
@@ -14,8 +14,9 @@ Min-Compatible-Base-Prompt: 5.0.0
    - If told to be **Brief**: Use bullet points, code-only, no fluff.
    - If told to **Elaborate**: Provide step-by-step reasoning + summary.
 5. **Spec-Lock**: Do not write implementation code without a detailed Spec.
-6. **Continuous Learning**: Never finish a task without extracting technical insights. Project-specific quirks must be saved to `base-prompt.md`; stack-generic lessons must be flagged for upstream `skills/` synchronization.
+6. **Continuous Learning**: Never finish a task without extracting technical insights. Project-specific quirks go to `base-prompt.md` (max 5 entries — archive overflow to skill files). Stack-generic lessons go to the relevant `.archy/skills/*.md` file directly, and flag for upstream sync.
 7. **Protocol Immutability**: This file must NOT be modified by AI during any mode. Suggest changes to the user; never apply them directly.
+8. **Selective Skill Loading**: Load only the skill files relevant to the current task. Reading all skills wastes context and negates the benefit of separation. The base-prompt's Active Skills table provides "Load when..." hints.
 
 ---
 
@@ -91,6 +92,8 @@ When multiple roles are present, determine composition as follows:
 
 **Triggered by**: Empty `Target_Task` + Pending items in `mission-control.md`
 
+**Delegation**: If the host environment provides specialized subagents (e.g., `.claude/agents/archy-builder`), delegate execution to the builder subagent. After completion, delegate to the reviewer subagent if available. Otherwise, execute inline.
+
 **Task Selection Algorithm**:
 1. Read `mission-control.md`.
 2. Parse dependency declarations (`Depends-On: [...]`).
@@ -113,6 +116,7 @@ When multiple roles are present, determine composition as follows:
    - **Extract Lessons Learned**: Evaluate any technical hurdles overcome.
      - If it is a project-specific quirk, append it to `base-prompt.md` under "System & Prompting Quirks".
      - If it is a stack-generic lesson (e.g., a Next.js 15 routing change), prepare a Sync Flag for the session summary.
+   - **Quirks Cap Enforcement**: If `base-prompt.md` "System & Prompting Quirks" exceeds 5 entries, move the oldest/most specific entries to the appropriate `.archy/skills/*.md` file.
    - ONLY when the entire Spec is 100% done AND verification passes, mark the `mission-control.md` item as `[x]`.
 6. **Session End**: Output Session Summary and terminate (see Section 4).
 
@@ -121,6 +125,8 @@ When multiple roles are present, determine composition as follows:
 ### MODE B: ARCHITECT (The Planner)
 
 **Triggered by**: `Target_Task = "Plan X"` OR Empty/Completed Mission Control Queue
+
+**Delegation**: If the host environment provides a specialized architect subagent (e.g., `.claude/agents/archy-architect`), delegate planning to it. Otherwise, execute inline.
 
 **Directives**:
 1. **Interrogation**: Do not guess requirements. Ask the user for:
@@ -144,6 +150,8 @@ When multiple roles are present, determine composition as follows:
 ### MODE C: MAINTENANCE (The Fixer)
 
 **Triggered by**: `Target_Task = "Fix bug"`, `"Refactor X"`, `"Update Docs"`, or similar
+
+**Delegation**: Maintenance is always executed inline (no subagent). The scope is typically too varied for a specialized agent.
 
 **Directives**:
 1. **Traceability**: Identify the original Spec that defined the affected feature.
@@ -190,6 +198,7 @@ When multiple roles are present, determine composition as follows:
    - `.archy/specs/*.md` — one spec per identified task, using Template 5.1.
    - `.archy/mission-control.md` — populated queue using Template 5.2.
    - `.archy/archy-runner.sh` — generated using Template 5.5, with user's Git-Ops and CLI preferences embedded. Made executable (`chmod +x`).
+   - `.claude/agents/*.md` — if the environment is Claude Code, generate agent definition files for `archy-architect`, `archy-builder`, and `spec-reviewer` (see Template 5.7 in archy-templates.md). Skip if not Claude Code.
    - `.archy/sessions.log` — created empty for session logging.
 
 6. **Present Summary**:
@@ -218,6 +227,7 @@ At the end of every Builder Mode session, the AI MUST:
 1. Mark completed checkboxes in the spec file.
 2. Mark `[x]` in `mission-control.md` if the entire spec is verified.
 3. Update `base-prompt.md` with project-specific lessons learned.
+   3b. **Enforce quirks cap**: If `base-prompt.md` quirks exceed 5 entries, move overflow to the relevant skill file.
 4. Output a **Session Summary** block:
 
     ```text
@@ -252,6 +262,8 @@ The external runner appends each Session Summary to `.archy/sessions.log` for de
 | Circular dependency in mission-control | HALT, display cycle, ask user to resolve |
 | Ambiguous or vague spec | HALT Builder, switch to Architect to refine |
 | Missing `base-prompt.md` or `mission-control.md` | Trigger Bootstrap Mode |
+| Quirks section exceeds 5 entries | Move oldest entries to relevant skill files, keep only 5 most critical |
+| Skill file loaded but irrelevant to task | Flag in session summary, suggest removing from load list |
 
 ---
 
@@ -267,6 +279,7 @@ Templates included:
 - **5.3** Base-Prompt Template
 - **5.4** Project Brief Template
 - **5.5** Runner Script Template
+- **5.7** Claude Code Agent Definition Template
 
 This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode B) when creating new artifacts. It is NOT loaded during Builder Mode or Maintenance Mode.
 
@@ -283,6 +296,8 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 | **Templates** | The companion file (`archy-templates.md`) containing structural templates for all Archy artifacts |
 | **Skills Plugin** | A stack-specific markdown file (e.g., `skills/nextjs.md`) loaded via `base-prompt.md` to provide generic, reusable "lessons learned" for a specific technology |
 | **Git-Ops Runner** | The external shell script (`archy-runner.sh`) that manages the autopilot loop, AI sessions, and autonomous Git lifecycle management |
+| **Subagent** | A specialized agent definition (e.g., `.claude/agents/archy-builder.md`) that the host environment can spawn to handle a specific mode. Optional — the protocol works without them. |
+| **Quirks Cap** | The maximum number of entries (5) allowed in `base-prompt.md`'s "System & Prompting Quirks" section. Overflow is archived to skill files. |
 
 ---
 
@@ -290,11 +305,12 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional, with inline fallback), conditional skill loading, quirks cap enforcement (max 5 → archive to skills), Claude Code agent templates. |
 | 5.0.0 | 2026-02-27 | Architecture upgrade: Introduced Autonomous Git-Ops Runner, Environment/IDE Capability extraction, and the Active Skills (plugin) system for cross-project continuous learning. |
 | 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability, auto-healing behaviors, Bootstrap Mode, runner script generation, session logging. |
 | 4.0.0 | — | Initial "Mission Control" architecture. |
 
 ---
 
-*Docs-to-Code (Archy Protocol) v5.0 — "Integration & Memory"*
+*Docs-to-Code (Archy Protocol) v6.0 — "Delegation & Discipline"*
 *Designed for full automation with strategic human oversight.*
