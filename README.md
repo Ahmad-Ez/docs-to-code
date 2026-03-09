@@ -121,12 +121,10 @@ In older versions, `base-prompt.md` became bloated with generic lessons. Since V
 **V6 Change — Conditional Loading:**
 Skills are no longer blindly loaded every session. The base-prompt now contains a menu table:
 
-```markdown
-| Skill | File | Load when... |
-|-------|------|--------------|
-| i18n | `@.archy/skills/i18n-intl.md` | Translation, locale, RTL work |
-| React | `@.archy/skills/react-components.md` | Component, JSX, hydration |
-```
+ | Skill | File | Load when... |
+ | ----- | ---- | ------------ |
+ | i18n | `@.archy/skills/i18n-intl.md` | Translation, locale, RTL work |
+ | React | `@.archy/skills/react-components.md` | Component, JSX, hydration |
 
 The AI reads the table and loads only the skills matching the current task. This keeps context usage proportional to task complexity.
 
