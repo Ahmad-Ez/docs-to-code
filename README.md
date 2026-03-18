@@ -1,4 +1,4 @@
-# 🤖 Docs-to-Code (Archy Protocol) (v6.0) — "Delegation & Discipline"
+# 🤖 Docs-to-Code (Archy Protocol) (v6.1) — "Earned Knowledge"
 
 Docs-to-Code: A spec-locked, autonomous AI software engineering protocol with continuous learning, environment awareness, and Git-Ops automation.
 
@@ -30,14 +30,25 @@ gemini "execute @.archy/base-prompt.md"
 
 ---
 
-## 🚀 What's New in V6?
+## 🚀 What's New in V6.1?
 
-V6 adds intelligent delegation and context discipline — making Archy work better with AI tools that support subagents (like Claude Code) while staying fully functional in single-agent environments (like Gemini CLI).
+V6.1 introduces a **skill lifecycle system** — lessons now earn their place through repeated evidence instead of single-pass judgment.
 
-1. **Subagent Delegation (Optional)**: Builder, Architect, and Reviewer modes can now be delegated to specialized subagents (e.g., `.claude/agents/archy-builder.md`) when the host environment supports them. Falls back to inline execution seamlessly.
-2. **Conditional Skill Loading**: Skills are no longer loaded all-at-once. The base-prompt now contains a menu with "Load when..." hints, so the AI loads only what's relevant to the current task — saving context window space.
-3. **Quirks Cap (Max 5)**: The "System & Prompting Quirks" section in base-prompt is now capped at 5 entries. Overflow is archived to the relevant `.archy/skills/*.md` file, preventing prompt bloat.
-4. **Claude Code Agent Templates**: Bootstrap Mode now generates `.claude/agents/` definitions when the environment is Claude Code, enabling native subagent spawning.
+1. **Candidates Buffer**: New lessons land in a staging area (`_candidates.md`) at score 1. Score increments on independent re-encounter across sessions. Only lessons with score ≥ 3 promote to a skill file. This filters signal from noise.
+2. **Project Skill File**: `_project.md` replaces the old "System & Prompting Quirks" section in base-prompt. Project-specific lessons now follow the same lifecycle rules as all other skills — unified system, no special cases.
+3. **Score-Sorted Skills**: Entries in skill files use `[score | last_seen]` format, sorted by score descending. When a file exceeds its 25-entry cap, the lowest-score entries are demoted.
+4. **Human-Only Archive**: Demoted lessons go to `_archive.md`. The AI writes to it but never reads it during normal operation — it's a human-reviewable safety net.
+5. **Demotion-Triggered Archive Audit**: Every 5th demotion triggers an audit routine. The AI scans the archive for recurring patterns (lessons that keep getting independently rediscovered), sums their scores, and revives worthy ones. Self-regulating frequency — active projects audit more often.
+6. **User Correction Fast-Track**: Explicit corrections ("don't do X", "use Y instead") bypass the buffer entirely and promote directly to skill files. High-confidence signals shouldn't wait.
+7. **Housekeeper Subagent**: Skill lifecycle management (promotions, cap enforcement, demotions, archive audits) is delegated to a dedicated `archy-housekeeper` subagent at session end. Falls back to inline execution in single-agent environments.
+
+For the design rationale behind these decisions, see [docs/memory-strategies.md](docs/memory-strategies.md).
+
+### V6.0 (Previous)
+
+1. **Subagent Delegation (Optional)**: Builder, Architect, and Reviewer modes can now be delegated to specialized subagents.
+2. **Conditional Skill Loading**: Base-prompt contains a menu with "Load when..." hints.
+3. **Claude Code Agent Templates**: Bootstrap generates `.claude/agents/` definitions when environment is Claude Code.
 
 ---
 
@@ -47,6 +58,7 @@ V6 adds intelligent delegation and context discipline — making Archy work bett
 * [Repository Contents](#repository-contents)
 * [Installation](#installation)
 * [The Skills Architecture (Memory)](#the-skills-architecture-memory)
+* [Memory Strategies (Design Rationale)](docs/memory-strategies.md)
 * [Autonomous Git-Ops (Runner)](#autonomous-git-ops-runner)
 * [Subagent Delegation](#subagent-delegation)
 * [Modes Overview](#modes-overview)
@@ -77,8 +89,10 @@ This is the `docs-to-code` root repo. It contains only what needs to be portable
 ```text
 docs-to-code/
 ├── .archy/
-│   ├── archy-protocol.md     # 🧠 The Constitution — runtime rules, continuous learning loop
-│   └── archy-templates.md    # 📐 Templates — specs, queues, base-prompt, skills, agents, runner
+│   ├── archy-protocol.md     # 🧠 The Constitution — runtime rules, skill lifecycle, continuous learning
+│   └── archy-templates.md    # 📐 Templates — specs, queues, base-prompt, skills, candidates, archive, agents, runner
+├── docs/
+│   └── memory-strategies.md  # 📝 Design rationale — strategies explored, trade-offs, why this approach
 ├── README.md                 # 📖 This file
 
 ```
@@ -113,23 +127,31 @@ cp ~/docs-to-code/.archy/archy-templates.md your-project/.archy/
 
 ## The Skills Architecture (Memory)
 
-In older versions, `base-prompt.md` became bloated with generic lessons. Since V5, knowledge is separated into two tiers:
+Since V6.1, Archy uses a **lifecycle-based skill system** where lessons earn their place through repeated evidence. Knowledge flows through four tiers:
 
-1. **System & Prompting Quirks (`base-prompt.md`)**: Project-specific environmental issues. **Capped at 5 entries** — overflow must be archived to skill files.
-2. **Active Skills (`.archy/skills/*.md`)**: Generic, reusable stack knowledge organized by topic.
+```text
+CANDIDATES (_candidates.md)     → Staging area. Score starts at 1, increments on re-encounter.
+    ↓ promote (score ≥ 3)           Expires after 10 sessions unseen. Max 15 entries.
+SKILL FILES (skills/*.md)       → Proven lessons. Score-sorted, max 25 per file.
+    ↓ demote (cap overflow)         Includes _project.md (always loaded) for project-specific lessons.
+ARCHIVE (_archive.md)           → Cold storage. AI writes, never reads (except during audit).
+    ↑ revive (audit finds pattern)  Human-reviewable safety net.
+```
 
-**V6 Change — Conditional Loading:**
-Skills are no longer blindly loaded every session. The base-prompt now contains a menu table:
+**Conditional Loading:** The base-prompt contains a menu table with "Load when..." hints. The AI loads only relevant skill files per task.
 
  | Skill | File | Load when... |
  | ----- | ---- | ------------ |
- | i18n | `@.archy/skills/i18n-intl.md` | Translation, locale, RTL work |
+ | Project Quirks | `@.archy/skills/_project.md` | Always |
  | React | `@.archy/skills/react-components.md` | Component, JSX, hydration |
 
-The AI reads the table and loads only the skills matching the current task. This keeps context usage proportional to task complexity.
+**User corrections** ("don't do X", "use Y instead") bypass the buffer and promote directly to skill files — high-confidence signals shouldn't wait.
 
-**The Sync Loop:**
-When Archy learns a generic stack lesson, it saves it directly to the relevant local skill file and outputs a `[FLAG: Sync upstream...]` in its Session Summary. You then copy that lesson back to the master `docs-to-code/skills/` repo so all future projects inherit it.
+**Archive Audit:** Every 5th demotion triggers an audit. The AI scans the archive for recurring patterns, sums scores of similar entries, and revives aggregates with score ≥ 3. This catches lessons that keep getting independently rediscovered.
+
+**The Sync Loop:** When Archy learns a generic stack lesson, it flags it in the Session Summary with `[FLAG: Sync upstream...]`. You then copy that lesson back to the master `docs-to-code/skills/` repo so all future projects inherit it.
+
+For the full design rationale (strategies explored, trade-offs, why we chose this approach), see [docs/memory-strategies.md](docs/memory-strategies.md).
 
 ---
 
@@ -168,6 +190,7 @@ When using AI tools that support subagents (e.g., Claude Code with `.claude/agen
 | ARCHITECT | `.claude/agents/archy-architect.md` | Plans features, creates specs |
 | BUILDER | `.claude/agents/archy-builder.md` | Executes one spec with TDD |
 | REVIEWER | `.claude/agents/spec-reviewer.md` | Verifies implementation against spec |
+| HOUSEKEEPER | `.claude/agents/archy-housekeeper.md` | Skill lifecycle: promotions, caps, demotions, archive audits |
 | MAINTENANCE | *(none)* | Always inline — scope too varied |
 
 **This is optional.** If no subagents are available (Gemini CLI, Aider, etc.), all modes execute inline as before. The base-prompt's System Logic section handles this with an if/else fallback.
@@ -250,7 +273,10 @@ my-project/
 │   ├── mission-control.md      # 📋 Execution Queue
 │   ├── archy-runner.sh         # 🔄 Git-Ops Autopilot Loop
 │   ├── sessions.log            # Audit Trail
-│   ├── skills/                 # Stack Plugins
+│   ├── skills/                 # Skill Lifecycle System
+│   │   ├── _project.md         # Project-specific lessons (always loaded)
+│   │   ├── _candidates.md      # Staging buffer (read at session end only)
+│   │   ├── _archive.md         # Cold storage (human-reviewable)
 │   │   └── nextjs-app-router.md
 │   └── specs/                  # The Blueprints
 │       ├── 00-db-schema.md
@@ -307,6 +333,7 @@ Maintenance Mode detects stale specs and flags them. You can also manually trigg
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 6.1.0 | 2026-03-18 | **"Earned Knowledge"**: Skill lifecycle system — candidates buffer, frequency-based promotion, project skill file, score-sorted demotion, human-only archive with audit routine, user correction fast-track. |
 | 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional), conditional skill loading, quirks cap, Claude Code agent templates. |
 | 5.0.0 | 2026-02-27 | **"Integration & Memory"**: Introduced Autonomous Git-Ops Runner, IDE/Environment Capability extraction, and the Active Skills plugin system. |
 | 4.1.0 | 2026-02-10 | Role Composition, Auto-Healing, split templates, runner generation. |
@@ -324,7 +351,7 @@ AI agent, autonomous software engineering, spec-driven development, docs-driven 
 
 Archy is a concept by **Ahmad Ez**.
 
-*Docs-to-Code (Archy Protocol) v6.0 — "Delegation & Discipline"*
+*Docs-to-Code (Archy Protocol) v6.1 — "Earned Knowledge"*
 *Designed for full automation with strategic human oversight.*
 
 ---
