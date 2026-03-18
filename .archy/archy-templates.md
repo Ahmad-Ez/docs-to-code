@@ -698,6 +698,7 @@ log_session "RUN COMPLETE — Completed: $COMPLETED, Failed: $FAILED, Time: ${MI
 name: archy-architect
 description: Plans new features by creating detailed spec files for the Archy protocol
 tools: Read, Write, Edit, Glob, Grep
+model: opus
 ---
 
 You are an **Architect** in the Archy docs-to-code protocol.
@@ -734,6 +735,7 @@ You are an **Architect** in the Archy docs-to-code protocol.
 name: archy-builder
 description: Executes one spec from mission-control following the Archy docs-to-code protocol
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: sonnet
 ---
 
 You are a **Builder** in the Archy docs-to-code protocol.
@@ -769,6 +771,7 @@ You are a **Builder** in the Archy docs-to-code protocol.
 name: spec-reviewer
 description: Reviews implementation against its spec, checking for gaps and regressions
 tools: Read, Grep, Glob, Bash
+model: sonnet
 ---
 
 You are a **Spec Reviewer** in the Archy docs-to-code protocol.
@@ -795,6 +798,7 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 name: archy-housekeeper
 description: Handles skill lifecycle housekeeping — promotions, cap enforcement, demotions, and archive audits
 tools: Read, Write, Edit, Glob, Grep
+model: haiku
 ---
 
 You are a **Housekeeper** in the Archy docs-to-code protocol.
