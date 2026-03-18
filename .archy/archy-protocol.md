@@ -1,7 +1,7 @@
-# DOCS-TO-CODE (ARCHY PROTOCOL) (v6.0) — "Delegation & Discipline"
+# DOCS-TO-CODE (ARCHY PROTOCOL) (v6.1) — "Earned Knowledge"
 
-Version: 6.0.0
-Min-Compatible-Base-Prompt: 6.0.0
+Version: 6.1.0
+Min-Compatible-Base-Prompt: 6.1.0
 
 ---
 
@@ -14,9 +14,9 @@ Min-Compatible-Base-Prompt: 6.0.0
    - If told to be **Brief**: Use bullet points, code-only, no fluff.
    - If told to **Elaborate**: Provide step-by-step reasoning + summary.
 5. **Spec-Lock**: Do not write implementation code without a detailed Spec.
-6. **Continuous Learning**: Never finish a task without extracting technical insights. Project-specific quirks go to `base-prompt.md` (max 5 entries — archive overflow to skill files). Stack-generic lessons go to the relevant `.archy/skills/*.md` file directly, and flag for upstream sync.
+6. **Continuous Learning**: Never finish a task without extracting technical insights. All new lessons land in the **candidates buffer** (`.archy/skills/_candidates.md`) first. Lessons earn their place through repeated independent sightings (score ≥ 3 promotes to a skill file). **Exception**: explicit user corrections ("don't do X", "use Y instead") are high-confidence signals — promote directly to the relevant skill file, bypassing the buffer.
 7. **Protocol Immutability**: This file must NOT be modified by AI during any mode. Suggest changes to the user; never apply them directly.
-8. **Selective Skill Loading**: Load only the skill files relevant to the current task. Reading all skills wastes context and negates the benefit of separation. The base-prompt's Active Skills table provides "Load when..." hints.
+8. **Selective Skill Loading**: Load only the skill files relevant to the current task. Reading all skills wastes context and negates the benefit of separation. The base-prompt's Active Skills table provides "Load when..." hints. `_candidates.md` is NOT loaded during normal task execution — only read during the lesson extraction phase at session end. `_archive.md` is ONLY read during an archive audit (see Section 5).
 
 ---
 
@@ -100,7 +100,7 @@ When multiple roles are present, determine composition as follows:
 3. Build implicit dependency graph.
 4. Select the **first unchecked `[ ]` item** where ALL dependencies are marked `[x]`.
 5. If multiple candidates tie → select by list order.
-6. If circular dependency detected → HALT and ask user to resolve.
+6. If circular dependency detected → HALT and ask user to resolve. Provide suggestion too.
 
 **Execution Directives**:
 1. **Ingest Spec**: Read the spec file from `.archy/specs/`.
@@ -113,10 +113,14 @@ When multiple roles are present, determine composition as follows:
    - If fail → fix and retry (max 3 attempts, then escalate).
 5. **Update State & Memory**:
    - Mark specific checkboxes inside the Spec file as you complete them.
-   - **Extract Lessons Learned**: Evaluate any technical hurdles overcome.
-     - If it is a project-specific quirk, append it to `base-prompt.md` under "System & Prompting Quirks".
-     - If it is a stack-generic lesson (e.g., a Next.js 15 routing change), prepare a Sync Flag for the session summary.
-   - **Quirks Cap Enforcement**: If `base-prompt.md` "System & Prompting Quirks" exceeds 5 entries, move the oldest/most specific entries to the appropriate `.archy/skills/*.md` file.
+   - **Extract Lessons Learned** (see full lifecycle in Section 4):
+     a. Evaluate any technical hurdles overcome during this session.
+     b. **User corrections** (explicit "don't do X" / "use Y instead") → write directly to the relevant skill file (high-confidence, skip buffer). Flag for upstream sync if stack-generic.
+     c. **All other lessons** (project-specific or stack-generic) → write to `.archy/skills/_candidates.md` as a new entry (score 1) or increment the score of a matching existing entry.
+     d. **Check promotions**: Any candidate with score ≥ 3 → promote to the relevant skill file (or `_project.md` if project-specific). Remove from candidates buffer.
+     e. **Check skill file caps**: If any skill file exceeds 25 entries, demote the lowest-score entries to `_archive.md`. Increment archive demotion counter.
+     f. **Check candidate expiry**: Any candidate with `last_seen` older than 10 sessions → expire to `_archive.md`. Increment archive demotion counter.
+     g. **Archive audit trigger**: If archive demotion counter ≥ 5, run the archive audit routine (see Section 5). Max one audit per session.
    - ONLY when the entire Spec is 100% done AND verification passes, mark the `mission-control.md` item as `[x]`.
 6. **Session End**: Output Session Summary and terminate (see Section 4).
 
@@ -157,7 +161,7 @@ When multiple roles are present, determine composition as follows:
 1. **Traceability**: Identify the original Spec that defined the affected feature.
 2. **Retroactive Update**: Update the Spec file in `.archy/specs/` to reflect new logic. Keep documentation alive.
 3. **Execution**: Apply the fix using TDD approach.
-4. **Knowledge Sync**: Update `base-prompt.md` or output a Sync Flag if the bug resolution uncovered a generic stack lesson.
+4. **Knowledge Sync**: Follow the lesson extraction flow (Mode A, Step 5) — write lessons to the candidates buffer or directly to skill files for user corrections. Output a Sync Flag if the resolution uncovered a generic stack lesson.
 5. **No Ghost Checkmarks**: Do NOT mark items in `mission-control.md` as done unless explicitly instructed.
 6. **Stale Spec Detection**: If implementation has drifted significantly from spec, flag it for user review.
 
@@ -194,10 +198,13 @@ When multiple roles are present, determine composition as follows:
    - If brief contains ambiguities, ask user before proceeding. Do not assume.
 
 5. **Generate Artifacts** (in order, using templates defined in `@.archy/archy-templates.md`):
-   - `.archy/base-prompt.md` — customized using Template 5.3, including Environment Capabilities and Active Skills plugins.
+   - `.archy/base-prompt.md` — customized using Template 5.3, including Environment Capabilities and Active Skills plugins. Add `_project.md` to Active Skills table with "Load when: always".
+   - `.archy/skills/_project.md` — project-specific skill file using Template 5.5. This replaces the old "System & Prompting Quirks" section in base-prompt. Same rules as all skill files (25 cap, score-sorted).
+   - `.archy/skills/_candidates.md` — empty staging buffer using Template 5.8.
+   - `.archy/skills/_archive.md` — empty archive using Template 5.9 (demotion counter at 0).
    - `.archy/specs/*.md` — one spec per identified task, using Template 5.1.
    - `.archy/mission-control.md` — populated queue using Template 5.2.
-   - `.archy/archy-runner.sh` — generated using Template 5.5, with user's Git-Ops and CLI preferences embedded. Made executable (`chmod +x`).
+   - `.archy/archy-runner.sh` — generated using Template 5.6, with user's Git-Ops and CLI preferences embedded. Made executable (`chmod +x`).
    - `.claude/agents/*.md` — if the environment is Claude Code, generate agent definition files for `archy-architect`, `archy-builder`, and `spec-reviewer` (see Template 5.7 in archy-templates.md). Skip if not Claude Code.
    - `.archy/sessions.log` — created empty for session logging.
 
@@ -226,8 +233,11 @@ Each Builder Mode session MUST execute exactly ONE spec from the mission-control
 At the end of every Builder Mode session, the AI MUST:
 1. Mark completed checkboxes in the spec file.
 2. Mark `[x]` in `mission-control.md` if the entire spec is verified.
-3. Update `base-prompt.md` with project-specific lessons learned.
-   3b. **Enforce quirks cap**: If `base-prompt.md` quirks exceed 5 entries, move overflow to the relevant skill file.
+3. **Run the Skill Lifecycle** (Mode A, Step 5d–5g):
+   a. Check candidates for promotions (score ≥ 3 → skill file).
+   b. Check skill files for cap overflow (> 25 → demote lowest-score to archive).
+   c. Check candidates for expiry (last_seen > 10 sessions → archive).
+   d. Check archive audit trigger (demotion counter ≥ 5 → run audit, max once per session).
 4. Output a **Session Summary** block:
 
     ```text
@@ -236,7 +246,11 @@ At the end of every Builder Mode session, the AI MUST:
     Status: COMPLETED | FAILED | ESCALATED
     Files Changed: {list}
     Tests: PASS | FAIL (attempt {n}/3)
-    [FLAG: Sync upstream to docs-to-code/skills/{plugin-name}.md - {Brief description of generic stack lesson}]
+    Skill Lifecycle:
+      [PROMOTED: {lesson} → skills/{file}.md (score {n})]
+      [DEMOTED: {lesson} → _archive.md (score {n}, reason: {overflow|expired})]
+      [AUDIT: Scanned archive — revived {n}, merged {n} duplicates]
+    [FLAG: Sync upstream to docs-to-code/skills/{plugin-name}.md - {Brief description}]
     Next Eligible Task: {spec filename or "QUEUE EMPTY"}
     ---
     ```
@@ -257,13 +271,17 @@ The external runner appends each Session Summary to `.archy/sessions.log` for de
 | Condition | Action |
 |-----------|--------|
 | Spec references non-existent file | Trigger Architect Mode to create missing spec |
-| Test fails 3 consecutive times | HALT, provide diagnostic summary, ask user for guidance |
+| Test fails 3 consecutive times | HALT, provide diagnostic summary, ask user for guidance, provide suggestion |
 | Spec appears stale vs. codebase | Flag in output, suggest Maintenance Mode review |
-| Circular dependency in mission-control | HALT, display cycle, ask user to resolve |
+| Circular dependency in mission-control | HALT, display cycle, ask user to resolve, provide suggestion |
 | Ambiguous or vague spec | HALT Builder, switch to Architect to refine |
 | Missing `base-prompt.md` or `mission-control.md` | Trigger Bootstrap Mode |
-| Quirks section exceeds 5 entries | Move oldest entries to relevant skill files, keep only 5 most critical |
 | Skill file loaded but irrelevant to task | Flag in session summary, suggest removing from load list |
+| Candidate score ≥ 3 | Promote to relevant skill file, remove from candidates buffer |
+| Skill file exceeds 25 entries | Demote lowest-score entries to `_archive.md`, increment demotion counter |
+| Candidate `last_seen` > 10 sessions ago | Expire to `_archive.md`, increment demotion counter |
+| Archive demotion counter ≥ 5 | Run archive audit: group similar entries, sum scores, revive aggregates with score ≥ 3 to candidates, merge duplicates. Reset counter. Max one audit per session. |
+| Skill file entry contradicts new lesson | Flag in session summary — do NOT auto-resolve, ask user |
 
 ---
 
@@ -278,8 +296,11 @@ Templates included:
 - **5.2** Mission Control Template
 - **5.3** Base-Prompt Template
 - **5.4** Project Brief Template
-- **5.5** Runner Script Template
+- **5.5** Skills Plugin Template
+- **5.6** Runner Script Template
 - **5.7** Claude Code Agent Definition Template
+- **5.8** Candidates Buffer Template
+- **5.9** Skills Archive Template
 
 This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode B) when creating new artifacts. It is NOT loaded during Builder Mode or Maintenance Mode.
 
@@ -294,10 +315,15 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 | **Base-Prompt** | The project-specific configuration file that launches Archy sessions and defines project context |
 | **Protocol** | This file — the immutable constitution that defines Archy's behavior |
 | **Templates** | The companion file (`archy-templates.md`) containing structural templates for all Archy artifacts |
-| **Skills Plugin** | A stack-specific markdown file (e.g., `skills/nextjs.md`) loaded via `base-prompt.md` to provide generic, reusable "lessons learned" for a specific technology |
+| **Skills Plugin** | A stack-specific markdown file (e.g., `skills/nextjs.md`) loaded via `base-prompt.md` to provide generic, reusable lessons. Entries use `[score | last_seen]` format and are sorted by score descending. Max 25 entries per file. |
+| **Project Skill File** | `_project.md` — a skill file for project-specific lessons. Same rules as other skill files but marked "Load when: always" in the Active Skills table. Replaces the old base-prompt quirks section. |
+| **Candidates Buffer** | Staging area for unproven lessons (`.archy/skills/_candidates.md`). New lessons start here at score 1. Score increments on re-encounter across sessions. Promotes to skill file at score ≥ 3. Expires after 10 sessions unseen. Max 15 entries. |
+| **Skills Archive** | Cold storage for demoted/expired lessons (`.archy/skills/_archive.md`). AI writes to it but never reads it — except during an archive audit. Human-reviewable. |
+| **Archive Audit** | Periodic routine triggered every 5 demotions to the archive. AI reads the archive, groups semantically similar entries, sums their scores, and revives aggregates with score ≥ 3 to the candidates buffer. Merges duplicate entries. Max one audit per session. |
+| **Sighting / Score** | An independent occurrence of a lesson across separate sessions. Same session = 1 sighting regardless of frequency. The score is the cumulative sighting count for an entry. |
+| **User Correction** | Explicit guidance from the user (e.g., "don't do X", "use Y instead"). High-confidence signal that bypasses the candidates buffer and promotes directly to the relevant skill file. |
 | **Git-Ops Runner** | The external shell script (`archy-runner.sh`) that manages the autopilot loop, AI sessions, and autonomous Git lifecycle management |
 | **Subagent** | A specialized agent definition (e.g., `.claude/agents/archy-builder.md`) that the host environment can spawn to handle a specific mode. Optional — the protocol works without them. |
-| **Quirks Cap** | The maximum number of entries (5) allowed in `base-prompt.md`'s "System & Prompting Quirks" section. Overflow is archived to skill files. |
 
 ---
 
@@ -305,6 +331,7 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 6.1.0 | 2026-03-18 | **"Earned Knowledge"**: Skill lifecycle system — candidates buffer with frequency-based promotion (score ≥ 3), project skill file (`_project.md`) replacing base-prompt quirks, skill file cap (25) with score-sorted demotion, human-only archive with demotion-triggered audit routine (every 5 demotions), user correction fast-track. |
 | 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional, with inline fallback), conditional skill loading, quirks cap enforcement (max 5 → archive to skills), Claude Code agent templates. |
 | 5.0.0 | 2026-02-27 | Architecture upgrade: Introduced Autonomous Git-Ops Runner, Environment/IDE Capability extraction, and the Active Skills (plugin) system for cross-project continuous learning. |
 | 4.1.0 | 2026-02-10 | Added Role Composition Rules, dependency-driven task selection, protocol immutability, auto-healing behaviors, Bootstrap Mode, runner script generation, session logging. |
@@ -312,5 +339,5 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 
 ---
 
-*Docs-to-Code (Archy Protocol) v6.0 — "Delegation & Discipline"*
+*Docs-to-Code (Archy Protocol) v6.1 — "Earned Knowledge"*
 *Designed for full automation with strategic human oversight.*

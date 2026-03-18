@@ -1,6 +1,6 @@
-# DOCS-TO-CODE (ARCHY TEMPLATES) (v6.0)
+# DOCS-TO-CODE (ARCHY TEMPLATES) (v6.1)
 
-Version: 6.0.0
+Version: 6.1.0
 Companion to: archy-protocol.md
 
 This file contains structural templates for all Archy artifacts.
@@ -117,8 +117,8 @@ Estimated-Effort: {optional: time estimate}
 ```markdown
 # ARCHY: SESSION LAUNCHER
 
-**Protocol-Version**: 5.0.0
-**Tested-With-Protocol**: 5.0.0
+**Protocol-Version**: 6.1.0
+**Tested-With-Protocol**: 6.1.0
 
 ---
 
@@ -193,17 +193,12 @@ Estimated-Effort: {optional: time estimate}
 ## Active Skills (Stack Memory)
 
 *Load ONLY the skills relevant to the current task. Do not read all files.*
+*`_candidates.md` is read ONLY during lesson extraction at session end — never during task execution.*
 
 | Skill | File | Load when... |
 |-------|------|--------------|
+| Project Quirks | `@.archy/skills/_project.md` | Always |
 | {skill name} | `@.archy/skills/{file}.md` | {brief trigger description} |
-
----
-
-## System & Prompting Quirks (Project Memory)
-<!-- MAX: 5 entries. Overflow MUST be moved to the relevant skill file. Generic stack lessons go directly to skills, not here. -->
-
-- {date}: {project-specific quirk}
 
 ---
 
@@ -396,15 +391,19 @@ Define what "done" looks like for v1:
 
 ---
 
-## Lessons Learned & Known Quirks
-*(This section is updated by Archy via the Sync Flag mechanism)*
+## Lessons
+<!-- MAX: 25 entries. Sorted by score desc (tiebreak: last_seen desc). Demote from bottom when cap exceeded. -->
+<!-- Format: - [score | last_seen] Lesson description -->
 
-- **{Date}**: {Describe the quirk and the workaround. e.g., "When using `next-intl` in Next.js Server Components, be sure to use `setRequestLocale(locale)` at the top of the component to enable static rendering."}
-- **{Date}**: {Another lesson learned...}
+- [5 | 2026-03-15] {e.g., App Router params changed in v15 — use `params` as Promise}
+- [3 | 2026-03-10] {e.g., Use `next/dynamic` for client-only libs, not conditional rendering}
+- [1 | 2026-02-20] {e.g., Middleware runs on edge runtime — no Node.js APIs available}
 
 ---
 
 ```
+
+**Note**: The `_project.md` skill file uses this same template with domain "Project-Specific" and "Load when: always" in the Active Skills table. It holds project-specific lessons that previously lived in the base-prompt quirks section.
 
 ---
 
@@ -751,7 +750,7 @@ You are a **Builder** in the Archy docs-to-code protocol.
 3. Follow TDD: write/plan tests first, then implement, then verify
 4. Check off implementation steps as you complete them
 5. Run the verification plan (test command from spec)
-6. Extract lessons learned → project quirks to base-prompt, stack lessons to skill files
+6. Extract lessons learned → write to `.archy/skills/_candidates.md` (or directly to skill file for user corrections). Process promotions, demotions, expirations, and archive audit trigger per Protocol Section 4.
 7. Mark spec as complete in `.archy/mission-control.md`
 
 ## Rules
@@ -789,6 +788,38 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 
 ---
 
+## 5.8 Candidates Buffer Template
+
+```markdown
+# Skill Candidates (Staging Buffer)
+<!-- MAX: 15 entries. AI reads this ONLY during lesson extraction at session end — never during task execution. -->
+<!-- Score increments on independent re-encounter across sessions (same session = 1 sighting max). -->
+<!-- Promote to relevant skill file when score >= 3. Expire to _archive.md if last_seen > 10 sessions ago. -->
+
+| # | Lesson | Category | First Seen | Last Seen | Score | Origin |
+|---|--------|----------|------------|-----------|-------|--------|
+```
+
+---
+
+## 5.9 Skills Archive Template
+
+```markdown
+# Skills Archive
+<!-- Demotions since last audit: 0 -->
+<!-- AI writes here on demotion/expiry. AI reads ONLY during archive audit (triggered every 5 demotions). -->
+<!-- Human-reviewable safety net. Entries carry their last score for context. -->
+<!-- During audit: group semantically similar entries, sum scores, revive aggregates with score >= 3 to _candidates.md, merge duplicates. -->
+
+## Archived Entries
+
+<!-- Format: -->
+<!-- - [score | date_archived] Origin: {skills/file.md or _candidates.md} | Reason: {cap-overflow | expired | audit-merged} -->
+<!--   {Lesson description} -->
+```
+
+---
+
 ## TEMPLATE USAGE REFERENCE
 
 | Template | Used By | When |
@@ -797,9 +828,11 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 | 5.2 Mission Control | Bootstrap Mode | Initial project scaffolding |
 | 5.3 Base-Prompt | Bootstrap Mode | Initial project scaffolding |
 | 5.4 Project Brief | Bootstrap Mode | When no brief exists and user needs guided interview |
-| 5.5 Skills Plugin | Bootstrap Mode, Maintenance | Creating reusable stack-specific knowledge modules |
+| 5.5 Skills Plugin | Bootstrap Mode, Builder Mode | Creating/updating skill files (including `_project.md`) |
 | 5.6 Runner Script | Bootstrap Mode | Initial project scaffolding |
 | 5.7 Claude Code Agents | Bootstrap Mode | When environment is Claude Code — generates `.claude/agents/` definitions |
+| 5.8 Candidates Buffer | Bootstrap Mode | Initial scaffolding of `.archy/skills/_candidates.md` |
+| 5.9 Skills Archive | Bootstrap Mode | Initial scaffolding of `.archy/skills/_archive.md` |
 
 ---
 
@@ -807,11 +840,12 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 6.1.0 | 2026-03-18 | Skill lifecycle: replaced base-prompt quirks with `_project.md` skill file, added candidates buffer template (5.8), skills archive template (5.9), score-sorted lesson format `[score | last_seen]`, updated skills plugin template with 25-entry cap. |
 | 6.0.0 | 2026-03-09 | Conditional skill loading in base-prompt, subagent delegation in system logic, quirks cap (max 5), Claude Code agent templates (5.7). |
 | 5.0.0 | 2026-02-27 | Added Environment & Capabilities and Active Skills to Base-Prompt. Merged Runner Config into Runner Script and added Git-Ops features. Added Skills Plugin Template. |
 | 4.1.0 | 2026-02-10 | Initial split from archy-protocol.md; added Project Brief template, Runner Script template, session logging. |
 
 ---
 
-*Docs-to-Code (Archy Templates) v6.0 — Companion to Archy Protocol*
+*Docs-to-Code (Archy Templates) v6.1 — Companion to Archy Protocol*
 *Loaded on-demand. Not required during Builder or Maintenance sessions.*
