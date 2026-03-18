@@ -213,8 +213,9 @@ If the host environment supports spawning specialized subagents (e.g., `.claude/
 | ARCHITECT | `archy-architect` | Execute architect steps inline |
 | BUILDER | `archy-builder` | Execute builder steps inline |
 | MAINTENANCE | *(none — always inline)* | Execute directly |
+| HOUSEKEEPING | `archy-housekeeper` | Execute lifecycle steps inline |
 
-After a Builder subagent completes, spawn `spec-reviewer` to verify the implementation against its spec before marking it done.
+After a Builder subagent completes, spawn `spec-reviewer` to verify the implementation against its spec, then spawn `archy-housekeeper` for skill lifecycle management, before marking it done.
 
 If subagents are **not** available, proceed inline as described below.
 
@@ -750,8 +751,9 @@ You are a **Builder** in the Archy docs-to-code protocol.
 3. Follow TDD: write/plan tests first, then implement, then verify
 4. Check off implementation steps as you complete them
 5. Run the verification plan (test command from spec)
-6. Extract lessons learned → write to `.archy/skills/_candidates.md` (or directly to skill file for user corrections). Process promotions, demotions, expirations, and archive audit trigger per Protocol Section 4.
-7. Mark spec as complete in `.archy/mission-control.md`
+6. Extract lessons learned → write to `.archy/skills/_candidates.md` (or directly to skill file for user corrections). Increment session counter in `_candidates.md`.
+7. Delegate skill lifecycle housekeeping to `archy-housekeeper` subagent (or execute inline if unavailable) — promotions, cap enforcement, demotions, archive audit.
+8. Mark spec as complete in `.archy/mission-control.md`
 
 ## Rules
 
@@ -786,15 +788,58 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 - Check for regressions in files adjacent to changed code
 ````
 
+### archy-housekeeper.md
+
+````markdown
+---
+name: archy-housekeeper
+description: Handles skill lifecycle housekeeping — promotions, cap enforcement, demotions, and archive audits
+tools: Read, Write, Edit, Glob, Grep
+---
+
+You are a **Housekeeper** in the Archy docs-to-code protocol.
+
+## Context
+
+- Read `.archy/archy-protocol.md` Section 3 MODE A Step 5 (d–g) and Section 5 for auto-healing behaviors
+- Read `.archy/skills/_candidates.md` for pending promotions and cap enforcement
+- Read `.archy/skills/_archive.md` for demotion counter and audit triggers
+- Read active skill files in `.archy/skills/` for cap enforcement
+
+## Process
+
+1. **Promotions**: Check `_candidates.md` for entries with score ≥ 3. Promote to the relevant skill file (or `_project.md` if project-specific). Remove from candidates.
+2. **Candidate cap**: If `_candidates.md` exceeds 15 entries, demote lowest-score entries to `_archive.md`. Increment demotion counter.
+3. **Skill file caps**: Check each skill file in `.archy/skills/`. If any exceeds 25 entries, demote lowest-score entries to `_archive.md`. Increment demotion counter.
+4. **Archive audit**: If demotion counter in `_archive.md` ≥ 5, run audit:
+   - Read `_archive.md` (the ONLY time archive is read)
+   - Group semantically similar entries (same lesson, different wording)
+   - Sum scores within each group
+   - Revive aggregates with score ≥ 3 to `_candidates.md`
+   - Merge duplicate archive entries into single entries with combined scores
+   - Reset demotion counter to 0
+5. Report actions taken for inclusion in Session Summary.
+
+## Rules
+
+- Max one archive audit per session
+- Do NOT modify skill file content beyond adding/removing lesson entries
+- Preserve sort order: score desc, last_seen desc as tiebreaker
+- When demoting, always pick the lowest-score entry (bottom of sorted list)
+- When promoting from candidates, place the new entry in correct sort position in target skill file
+````
+
 ---
 
 ## 5.8 Candidates Buffer Template
 
 ```markdown
 # Skill Candidates (Staging Buffer)
-<!-- MAX: 15 entries. AI reads this ONLY during lesson extraction at session end — never during task execution. -->
+<!-- Session: 0 -->
+<!-- MAX: 15 entries. Overflow demotes lowest-score to _archive.md. -->
+<!-- AI reads this ONLY during skill lifecycle phase at session end — never during task execution. -->
 <!-- Score increments on independent re-encounter across sessions (same session = 1 sighting max). -->
-<!-- Promote to relevant skill file when score >= 3. Expire to _archive.md if last_seen > 10 sessions ago. -->
+<!-- Promote to relevant skill file when score >= 3. -->
 
 | # | Lesson | Category | First Seen | Last Seen | Score | Origin |
 |---|--------|----------|------------|-----------|-------|--------|
@@ -807,14 +852,14 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 ```markdown
 # Skills Archive
 <!-- Demotions since last audit: 0 -->
-<!-- AI writes here on demotion/expiry. AI reads ONLY during archive audit (triggered every 5 demotions). -->
+<!-- AI writes here on demotion. AI reads ONLY during archive audit (triggered every 5 demotions). -->
 <!-- Human-reviewable safety net. Entries carry their last score for context. -->
 <!-- During audit: group semantically similar entries, sum scores, revive aggregates with score >= 3 to _candidates.md, merge duplicates. -->
 
 ## Archived Entries
 
 <!-- Format: -->
-<!-- - [score | date_archived] Origin: {skills/file.md or _candidates.md} | Reason: {cap-overflow | expired | audit-merged} -->
+<!-- - [score | date_archived] Origin: {skills/file.md or _candidates.md} | Reason: {candidate-overflow | skill-cap | audit-merged} -->
 <!--   {Lesson description} -->
 ```
 
@@ -830,7 +875,7 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 | 5.4 Project Brief | Bootstrap Mode | When no brief exists and user needs guided interview |
 | 5.5 Skills Plugin | Bootstrap Mode, Builder Mode | Creating/updating skill files (including `_project.md`) |
 | 5.6 Runner Script | Bootstrap Mode | Initial project scaffolding |
-| 5.7 Claude Code Agents | Bootstrap Mode | When environment is Claude Code — generates `.claude/agents/` definitions |
+| 5.7 Claude Code Agents | Bootstrap Mode | When environment is Claude Code — generates `.claude/agents/` definitions (architect, builder, reviewer, housekeeper) |
 | 5.8 Candidates Buffer | Bootstrap Mode | Initial scaffolding of `.archy/skills/_candidates.md` |
 | 5.9 Skills Archive | Bootstrap Mode | Initial scaffolding of `.archy/skills/_archive.md` |
 

@@ -37,9 +37,10 @@ V6.1 introduces a **skill lifecycle system** — lessons now earn their place th
 1. **Candidates Buffer**: New lessons land in a staging area (`_candidates.md`) at score 1. Score increments on independent re-encounter across sessions. Only lessons with score ≥ 3 promote to a skill file. This filters signal from noise.
 2. **Project Skill File**: `_project.md` replaces the old "System & Prompting Quirks" section in base-prompt. Project-specific lessons now follow the same lifecycle rules as all other skills — unified system, no special cases.
 3. **Score-Sorted Skills**: Entries in skill files use `[score | last_seen]` format, sorted by score descending. When a file exceeds its 25-entry cap, the lowest-score entries are demoted.
-4. **Human-Only Archive**: Demoted/expired lessons go to `_archive.md`. The AI writes to it but never reads it during normal operation — it's a human-reviewable safety net.
+4. **Human-Only Archive**: Demoted lessons go to `_archive.md`. The AI writes to it but never reads it during normal operation — it's a human-reviewable safety net.
 5. **Demotion-Triggered Archive Audit**: Every 5th demotion triggers an audit routine. The AI scans the archive for recurring patterns (lessons that keep getting independently rediscovered), sums their scores, and revives worthy ones. Self-regulating frequency — active projects audit more often.
 6. **User Correction Fast-Track**: Explicit corrections ("don't do X", "use Y instead") bypass the buffer entirely and promote directly to skill files. High-confidence signals shouldn't wait.
+7. **Housekeeper Subagent**: Skill lifecycle management (promotions, cap enforcement, demotions, archive audits) is delegated to a dedicated `archy-housekeeper` subagent at session end. Falls back to inline execution in single-agent environments.
 
 For the design rationale behind these decisions, see [docs/memory-strategies.md](docs/memory-strategies.md).
 
@@ -189,6 +190,7 @@ When using AI tools that support subagents (e.g., Claude Code with `.claude/agen
 | ARCHITECT | `.claude/agents/archy-architect.md` | Plans features, creates specs |
 | BUILDER | `.claude/agents/archy-builder.md` | Executes one spec with TDD |
 | REVIEWER | `.claude/agents/spec-reviewer.md` | Verifies implementation against spec |
+| HOUSEKEEPER | `.claude/agents/archy-housekeeper.md` | Skill lifecycle: promotions, caps, demotions, archive audits |
 | MAINTENANCE | *(none)* | Always inline — scope too varied |
 
 **This is optional.** If no subagents are available (Gemini CLI, Aider, etc.), all modes execute inline as before. The base-prompt's System Logic section handles this with an if/else fallback.

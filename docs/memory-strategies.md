@@ -102,7 +102,9 @@ So user corrections promote directly to skill files. Everything else goes throug
 
 ## What We Intentionally Left Out
 
+- **Time-based decay:** We explored expiring candidates after N sessions unseen, but with only 15 candidate slots and zero context cost (never loaded during tasks), cap-based overflow is sufficient. Adding a decay cycle added complexity to manage a file that barely matters token-wise.
 - **Decay formulas:** Score doesn't decay over time. The sort order (score desc, last_seen desc as tiebreaker) creates natural decay — stale entries sink to the bottom and get demoted when the cap is hit. No formula needed.
+- **Dedicated housekeeping agent:** We added an `archy-housekeeper` subagent to handle skill lifecycle management at session end. This separates concerns — the builder builds, the housekeeper manages knowledge. In single-agent environments, it falls back to inline execution.
 - **Cross-file score normalization:** A score of 3 in one file means the same as 3 in another. No relative weighting between files.
 - **Automated conflict resolution:** When a new lesson contradicts an existing skill, the system flags it and asks the user. Auto-resolution is too risky for a knowledge system.
 - **Per-project dynamic caps:** All projects use the same caps (15 candidates, 25 per skill file). The simplicity outweighs the marginal benefit of scaling caps with project size. If a project genuinely needs more, the user can adjust the numbers in the protocol copy.
