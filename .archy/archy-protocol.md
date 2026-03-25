@@ -1,6 +1,6 @@
 # DOCS-TO-CODE (ARCHY PROTOCOL) (v6.1) — "Earned Knowledge"
 
-Version: 6.1.0
+Version: 6.1.1
 Min-Compatible-Base-Prompt: 6.1.0
 
 ---
@@ -88,7 +88,11 @@ When multiple roles are present, determine composition as follows:
 
 **Triggered by**: Empty `Target_Task` + Pending items in `mission-control.md`
 
-**Delegation**: If the host environment provides specialized subagents (e.g., `.claude/agents/archy-builder`), delegate execution to the builder subagent. After completion, delegate to the reviewer subagent if available. Otherwise, execute inline.
+**Delegation**: If the host environment provides specialized subagents (e.g., `.claude/agents/archy-builder`), delegate execution to the builder subagent. After the builder completes (commit + push, **no PR**), the parent orchestrator must:
+1. Spawn `spec-reviewer` + `archy-housekeeper` in parallel.
+2. If reviewer finds HIGH or MEDIUM issues → spawn builder again to fix on the same branch, push, re-run reviewer. Repeat until reviewer returns PASS or no HIGH/MEDIUM issues remain.
+3. **Create the PR only after reviewer PASS and housekeeper complete.**
+Otherwise, execute inline following the same gate sequence.
 
 **Task Selection Algorithm**:
 1. Read `mission-control.md`.
@@ -119,7 +123,7 @@ When multiple roles are present, determine composition as follows:
      f. **Check skill file caps**: If any skill file exceeds 25 entries, demote the lowest-score entries to `_archive.md`. Increment archive demotion counter.
      g. **Archive audit trigger**: If archive demotion counter ≥ 5, run the archive audit routine (see Section 5). Max one audit per session. Reset counter.
    - ONLY when the entire Spec is 100% done AND verification passes, mark the `mission-control.md` item as `[x]`.
-6. **Session End**: Output Session Summary and terminate (see Section 4).
+6. **Session End**: Commit and push the feature branch. **Do NOT create a PR.** Output Session Summary and terminate (see Section 4). PR creation is the parent orchestrator's responsibility, after the review+fix gate passes.
 
 ---
 
@@ -230,12 +234,13 @@ Each Builder Mode session MUST execute exactly ONE spec from the mission-control
 At the end of every Builder Mode session, the AI MUST:
 1. Mark completed checkboxes in the spec file.
 2. Mark `[x]` in `mission-control.md` if the entire spec is verified.
-3. **Run the Skill Lifecycle** (Mode A, Step 5d–5g) — delegate to housekeeper subagent if available, otherwise inline:
+3. Commit all changes and push the feature branch. **Do NOT create a PR** — the PR gate belongs to the parent orchestrator (see Mode A Delegation).
+4. **Run the Skill Lifecycle** (Mode A, Step 5d–5g) — delegate to housekeeper subagent if available, otherwise inline:
    a. Check candidates for promotions (score ≥ 3 → skill file).
    b. Check candidates for cap overflow (> 15 → demote lowest-score to archive).
    c. Check skill files for cap overflow (> 25 → demote lowest-score to archive).
    d. Check archive audit trigger (demotion counter ≥ 5 → run audit, max once per session, reset counter).
-4. Output a **Session Summary** block:
+5. Output a **Session Summary** block:
 
     ```text
     --- SESSION SUMMARY ---
@@ -252,7 +257,7 @@ At the end of every Builder Mode session, the AI MUST:
     ---
     ```
 
-5. Terminate. Do not pick up the next task. A fresh session will be started by the external runner.
+6. Terminate. Do not pick up the next task. A fresh session will be started by the external runner.
 
 ### Session Logging & Git-Ops
 The external runner appends each Session Summary to `.archy/sessions.log` for debugging and audit trail purposes. If enabled in the runner script, the runner will autonomously handle feature branching, committing, and PR merging based on the successful execution of a session.
@@ -329,6 +334,7 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 6.1.1 | 2026-03-25 | **PR Gate**: Builder session ends at push (no PR). Parent orchestrator owns: spec-reviewer + housekeeper (parallel) → fix loop until reviewer PASS → PR creation. Applies to both subagent delegation and inline execution. |
 | 6.1.0 | 2026-03-18 | **"Earned Knowledge"**: Skill lifecycle system — candidates buffer with frequency-based promotion (score ≥ 3), project skill file (`_project.md`) replacing base-prompt quirks, skill file cap (25) with score-sorted demotion, human-only archive with demotion-triggered audit routine (every 5 demotions), user correction fast-track. |
 | 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional, with inline fallback), conditional skill loading, quirks cap enforcement (max 5 → archive to skills), Claude Code agent templates. |
 | 5.0.0 | 2026-02-27 | Architecture upgrade: Introduced Autonomous Git-Ops Runner, Environment/IDE Capability extraction, and the Active Skills (plugin) system for cross-project continuous learning. |
