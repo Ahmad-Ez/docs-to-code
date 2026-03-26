@@ -1,6 +1,6 @@
 # DOCS-TO-CODE (ARCHY PROTOCOL) (v6.1) — "Earned Knowledge"
 
-Version: 6.1.1
+Version: 6.1.2
 Min-Compatible-Base-Prompt: 6.1.0
 
 ---
@@ -89,9 +89,10 @@ When multiple roles are present, determine composition as follows:
 **Triggered by**: Empty `Target_Task` + Pending items in `mission-control.md`
 
 **Delegation**: If the host environment provides specialized subagents (e.g., `.claude/agents/archy-builder`), delegate execution to the builder subagent. After the builder completes (commit + push, **no PR**), the parent orchestrator must:
-1. Spawn `spec-reviewer` + `archy-housekeeper` in parallel.
+1. Spawn `spec-reviewer`.
 2. If reviewer finds HIGH or MEDIUM issues → spawn builder again to fix on the same branch, push, re-run reviewer. Repeat until reviewer returns PASS or no HIGH/MEDIUM issues remain.
-3. **Create the PR only after reviewer PASS and housekeeper complete.**
+3. **Only after reviewer PASS**: spawn `archy-housekeeper`. Do NOT run housekeeper in parallel with the reviewer cycle — fix commits may add new lessons that the housekeeper must capture.
+4. **Create the PR only after reviewer PASS and housekeeper complete.**
 Otherwise, execute inline following the same gate sequence.
 
 **Task Selection Algorithm**:
@@ -334,7 +335,8 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 6.1.1 | 2026-03-25 | **PR Gate**: Builder session ends at push (no PR). Parent orchestrator owns: spec-reviewer + housekeeper (parallel) → fix loop until reviewer PASS → PR creation. Applies to both subagent delegation and inline execution. |
+| 6.1.2 | 2026-03-26 | **DRY Base-Prompt**: Removed duplicated operational logic (subagent delegation, workflow gates, context hygiene, mode determination, session handoff) from base-prompt. Protocol is now the single source of truth for all operational logic. Base-prompt provides project-specific configuration only. |
+| 6.1.1 | 2026-03-25 | **PR Gate**: Builder session ends at push (no PR). Parent orchestrator owns: spec-reviewer → fix loop until reviewer PASS → housekeeper (sequential, after PASS) → PR creation. Applies to both subagent delegation and inline execution. |
 | 6.1.0 | 2026-03-18 | **"Earned Knowledge"**: Skill lifecycle system — candidates buffer with frequency-based promotion (score ≥ 3), project skill file (`_project.md`) replacing base-prompt quirks, skill file cap (25) with score-sorted demotion, human-only archive with demotion-triggered audit routine (every 5 demotions), user correction fast-track. |
 | 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional, with inline fallback), conditional skill loading, quirks cap enforcement (max 5 → archive to skills), Claude Code agent templates. |
 | 5.0.0 | 2026-02-27 | Architecture upgrade: Introduced Autonomous Git-Ops Runner, Environment/IDE Capability extraction, and the Active Skills (plugin) system for cross-project continuous learning. |
