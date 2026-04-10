@@ -1,6 +1,6 @@
 # DOCS-TO-CODE (ARCHY PROTOCOL) (v6.1) — "Earned Knowledge"
 
-Version: 6.1.2
+Version: 6.1.4
 Min-Compatible-Base-Prompt: 6.1.0
 
 ---
@@ -89,10 +89,10 @@ When multiple roles are present, determine composition as follows:
 **Triggered by**: Empty `Target_Task` + Pending items in `mission-control.md`
 
 **Delegation**: If the host environment provides specialized subagents (e.g., `.claude/agents/archy-builder`), delegate execution to the builder subagent. After the builder completes (commit + push, **no PR**), the parent orchestrator must:
-1. Spawn `spec-reviewer`.
-2. If reviewer finds HIGH or MEDIUM issues → spawn builder again to fix on the same branch, push, re-run reviewer. Repeat until reviewer returns PASS or no HIGH/MEDIUM issues remain.
-3. **Only after reviewer PASS**: spawn `archy-housekeeper`. Do NOT run housekeeper in parallel with the reviewer cycle — fix commits may add new lessons that the housekeeper must capture.
-4. **Create the PR only after reviewer PASS and housekeeper complete.**
+1. Spawn `spec-reviewer` + `archy-housekeeper` in parallel.
+2. If reviewer finds ANY issues (HIGH, MEDIUM, or LOW) → spawn builder again to fix on the same branch, push, re-run reviewer. Repeat until reviewer returns PASS or no issues remain.
+3. **Wait for housekeeper to fully complete — including its commit+push of skill lifecycle changes — before creating the PR.**
+4. **Create the PR only after reviewer PASS and housekeeper commit+push are both confirmed.**
 Otherwise, execute inline following the same gate sequence.
 
 **Task Selection Algorithm**:
@@ -236,7 +236,7 @@ At the end of every Builder Mode session, the AI MUST:
 1. Mark completed checkboxes in the spec file.
 2. Mark `[x]` in `mission-control.md` if the entire spec is verified.
 3. Commit all changes and push the feature branch. **Do NOT create a PR** — the PR gate belongs to the parent orchestrator (see Mode A Delegation).
-4. **Run the Skill Lifecycle** (Mode A, Step 5d–5g) — delegate to housekeeper subagent if available, otherwise inline:
+4. **Run the Skill Lifecycle** (Mode A, Step 5d–5g) — delegate to housekeeper subagent if available, otherwise inline. **The housekeeper MUST commit and push its skill lifecycle file changes before reporting completion.** The parent orchestrator must wait for this commit+push to be confirmed before creating the PR.
    a. Check candidates for promotions (score ≥ 3 → skill file).
    b. Check candidates for cap overflow (> 15 → demote lowest-score to archive).
    c. Check skill files for cap overflow (> 25 → demote lowest-score to archive).
@@ -335,6 +335,8 @@ This file is loaded ONLY during Bootstrap Mode (Mode D) and Architect Mode (Mode
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 6.1.4 | 2026-04-07 | **Fix-All Severities**: Reviewer fix loop now triggers on ANY issue (HIGH, MEDIUM, or LOW), not just HIGH/MEDIUM. Builder re-runs until reviewer returns PASS with zero issues. |
+| 6.1.3 | 2026-03-27 | **Housekeeper Commit Gate**: Housekeeper must commit+push skill lifecycle changes before reporting completion. Orchestrator must wait for housekeeper commit+push confirmation before creating the PR. Housekeeper agent gains `Bash` tool to enable git operations. |
 | 6.1.2 | 2026-03-26 | **DRY Base-Prompt**: Removed duplicated operational logic (subagent delegation, workflow gates, context hygiene, mode determination, session handoff) from base-prompt. Protocol is now the single source of truth for all operational logic. Base-prompt provides project-specific configuration only. |
 | 6.1.1 | 2026-03-25 | **PR Gate**: Builder session ends at push (no PR). Parent orchestrator owns: spec-reviewer → fix loop until reviewer PASS → housekeeper (sequential, after PASS) → PR creation. Applies to both subagent delegation and inline execution. |
 | 6.1.0 | 2026-03-18 | **"Earned Knowledge"**: Skill lifecycle system — candidates buffer with frequency-based promotion (score ≥ 3), project skill file (`_project.md`) replacing base-prompt quirks, skill file cap (25) with score-sorted demotion, human-only archive with demotion-triggered audit routine (every 5 demotions), user correction fast-track. |

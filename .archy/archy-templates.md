@@ -1,6 +1,6 @@
 # DOCS-TO-CODE (ARCHY TEMPLATES) (v6.1)
 
-Version: 6.1.0
+Version: 6.1.2
 Companion to: archy-protocol.md
 
 This file contains structural templates for all Archy artifacts.
@@ -188,6 +188,8 @@ Estimated-Effort: {optional: time estimate}
 
 {Any project-specific rules that supplement the protocol. These take precedence over protocol defaults but cannot contradict Iron Rules.}
 
+- **Git Workflow**: Follow `@.archy/SOPs.md` for branching, merging, and release conventions.
+
 ---
 
 ## Active Skills (Stack Memory)
@@ -204,46 +206,9 @@ Estimated-Effort: {optional: time estimate}
 
 ## 🚀 SYSTEM LOGIC
 
-### Subagent Delegation (Optional)
-
-If the host environment supports spawning specialized subagents (e.g., `.claude/agents/` in Claude Code), **delegate** each mode to its matching agent instead of executing inline:
-
-| Mode | Subagent | Fallback |
-|------|----------|----------|
-| ARCHITECT | `archy-architect` | Execute architect steps inline |
-| BUILDER | `archy-builder` | Execute builder steps inline |
-| MAINTENANCE | *(none — always inline)* | Execute directly |
-| HOUSEKEEPING | `archy-housekeeper` | Execute lifecycle steps inline |
-
-After a Builder subagent completes, spawn `spec-reviewer` to verify the implementation against its spec, then spawn `archy-housekeeper` for skill lifecycle management, before marking it done.
-
-If subagents are **not** available, proceed inline as described below.
-
----
-
-### Step 1: Load Constitution
 Read and internalize: `@.archy/archy-protocol.md`
 
-### Step 2: Determine Mode
-
-**IF** `Target_Task` is NOT empty:
-- **ACTIVATE**: MAINTENANCE or ARCHITECT MODE (based on task nature)
-- **Context**: Load `@.archy/mission-control.md` (read-only for context)
-- **Action**: Execute `Target_Task` immediately (or delegate to the appropriate subagent)
-- **Rule**: If task changes system logic, update the relevant spec file before finishing
-
-**ELSE** (Target_Task is empty):
-- **ACTIVATE**: BUILDER MODE (AUTOPILOT)
-- **Context**: Read `@.archy/mission-control.md`
-- **Logic**:
-  1. Parse `Depends-On` declarations
-  2. Find first `[ ]` item with all dependencies satisfied (`[x]`)
-  3. Load the referenced spec file
-- **Action**: Execute the spec (or delegate to the builder subagent)
-- **Review**: After implementation, verify against the spec (or delegate to the reviewer subagent)
-- **Completion**: Mark `[x]` in mission-control ONLY after verification passes
-- **Session End**: Output Session Summary block and terminate (see Protocol Section 4)
-- **Empty Queue?**: If all items are `[x]`, switch to ARCHITECT MODE and ask user for next milestone
+The protocol is the single source of truth for all operational logic: mode determination, subagent delegation, builder → reviewer → housekeeper gate sequence, context hygiene, session boundaries, and skill lifecycle. This base-prompt provides project-specific configuration only.
 
 ```
 
@@ -797,7 +762,7 @@ You are a **Spec Reviewer** in the Archy docs-to-code protocol.
 ---
 name: archy-housekeeper
 description: Handles skill lifecycle housekeeping — promotions, cap enforcement, demotions, and archive audits
-tools: Read, Write, Edit, Glob, Grep
+tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku
 ---
 
@@ -822,7 +787,11 @@ You are a **Housekeeper** in the Archy docs-to-code protocol.
    - Revive aggregates with score ≥ 3 to `_candidates.md`
    - Merge duplicate archive entries into single entries with combined scores
    - Reset demotion counter to 0
-5. Report actions taken for inclusion in Session Summary.
+5. **Commit skill lifecycle changes**: After all housekeeping file edits are complete, stage and commit them to the current feature branch:
+   - `git add .archy/skills/`
+   - `git commit -m "chore: skill lifecycle housekeeping"` (only if there are changes to commit)
+   - `git push`
+6. Report actions taken (including the commit SHA if committed) for inclusion in Session Summary.
 
 ## Rules
 
@@ -869,6 +838,125 @@ You are a **Housekeeper** in the Archy docs-to-code protocol.
 
 ---
 
+## 5.10 SOPs Template
+
+```markdown
+# Git Workflow SOP
+
+A streamlined branching strategy where `main` is production, `dev` is integration, and releases flow through dedicated branches.
+
+---
+
+## Branch Overview
+
+| Branch           | Purpose                    | Protected               |
+| ---------------- | -------------------------- | ----------------------- |
+| `main`           | Production code            | Yes - no direct commits |
+| `dev`            | Feature integration        | Yes - requires PR       |
+| `feature/*`      | Individual tasks           | No                      |
+| `release/vX.X.X` | Release preparation        | No                      |
+| `hotfix/*`       | Emergency production fixes | No                      |
+
+---
+
+## Merge Methods
+
+**Use this as your quick reference:**
+
+| Merging From → To    | Method               |
+| -------------------- | -------------------- |
+| `feature/*` → `dev`  | **Squash and Merge** |
+| `release/*` → `main` | **Merge Commit**     |
+| `release/*` → `dev`  | **Merge Commit**     |
+| `hotfix/*` → `main`  | **Merge Commit**     |
+| `hotfix/*` → `dev`   | **Merge Commit**     |
+
+**Why?**
+
+- **Squash** for features: One clean commit per PR. Easy to read, easy to revert.
+- **Merge commit** for releases/hotfixes: Preserves history of what went to production.
+
+---
+
+## Feature Workflow
+
+1. **Sync**: Update your local `dev` to match remote
+
+   ```bash
+   git checkout dev
+   git pull origin dev
+   ```
+
+2. **Branch**: Create feature branch from `dev`
+
+   ```bash
+   git checkout --no-track -b feature/short-description origin/dev
+   ```
+
+3. **Commit**: Make atomic commits (one logical change each)
+
+4. **Push & PR**: Push to GitHub, open PR against `dev`
+
+5. **Review**: Get at least 1 approval
+
+6. **Merge**: Use **Squash and Merge** on GitHub
+
+7. **Cleanup**: Delete the feature branch
+
+---
+
+## Trivial Commits (Exception)
+
+The project lead may commit directly to `dev` **only** for changes that meet ALL of these criteria:
+
+- Single commit (one logical change)
+- ≤3 files touched
+- Clearly non-breaking: typo fixes, comment edits, config tweaks, quick bug fixes
+- CI passes locally before pushing
+
+**Contributors and substantive changes must always use feature branches and PR workflow.**
+
+---
+
+## Release Workflow
+
+1. Decide the version bump type (patch / minor / major)
+2. Run the release script (if available) or manually: create `release/vX.X.X` from `dev`, merge to `main` with merge commit, tag, merge back to `dev`
+3. No new features on the release branch
+
+---
+
+## Hotfix Workflow
+
+For critical production bugs only.
+
+1. Create `hotfix/*` branch from `main`
+2. Fix & test
+3. Merge to both `main` (with merge commit + tag) and `dev`
+4. Cleanup branch
+
+---
+
+## PR Requirements
+
+- **Description**: What changed and why
+- **Link Issues**: Reference related issue numbers
+- **CI Pass**: All tests and linting must pass
+- **Resolve Conflicts**: Author rebases on `dev` if needed
+
+---
+
+## Roles
+
+| Role             | Responsibility                                         |
+| ---------------- | ------------------------------------------------------ |
+| **Author**       | Write code, pass tests, resolve conflicts              |
+| **Reviewer**     | Validate logic, check quality, approve/request changes |
+| **Release Lead** | Run release script, decide version bump type           |
+```
+
+---
+
 ## TEMPLATE USAGE REFERENCE
 
 | Template | Used By | When |
@@ -882,6 +970,7 @@ You are a **Housekeeper** in the Archy docs-to-code protocol.
 | 5.7 Claude Code Agents | Bootstrap Mode | When environment is Claude Code — generates `.claude/agents/` definitions (architect, builder, reviewer, housekeeper) |
 | 5.8 Candidates Buffer | Bootstrap Mode | Initial scaffolding of `.archy/skills/_candidates.md` |
 | 5.9 Skills Archive | Bootstrap Mode | Initial scaffolding of `.archy/skills/_archive.md` |
+| 5.10 SOPs | Bootstrap Mode | Initial scaffolding of `.archy/SOPs.md` — repo-agnostic git workflow conventions |
 
 ---
 
@@ -889,6 +978,8 @@ You are a **Housekeeper** in the Archy docs-to-code protocol.
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 6.1.2 | 2026-04-10 | Base-prompt template (5.3) DRY refactor: replaced duplicated SYSTEM LOGIC with protocol reference. Added SOPs template (5.10) and SOPs reference in base-prompt Custom Rules. |
+| 6.1.1 | 2026-04-10 | Housekeeper agent template (5.7): added Bash tool and Step 5 (commit skill lifecycle changes). Synced with protocol v6.1.3/v6.1.4. |
 | 6.1.0 | 2026-03-18 | Skill lifecycle: replaced base-prompt quirks with `_project.md` skill file, added candidates buffer template (5.8), skills archive template (5.9), score-sorted lesson format `[score | last_seen]`, updated skills plugin template with 25-entry cap. |
 | 6.0.0 | 2026-03-09 | Conditional skill loading in base-prompt, subagent delegation in system logic, quirks cap (max 5), Claude Code agent templates (5.7). |
 | 5.0.0 | 2026-02-27 | Added Environment & Capabilities and Active Skills to Base-Prompt. Merged Runner Config into Runner Script and added Git-Ops features. Added Skills Plugin Template. |

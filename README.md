@@ -44,6 +44,14 @@ V6.1 introduces a **skill lifecycle system** — lessons now earn their place th
 
 For the design rationale behind these decisions, see [docs/memory-strategies.md](docs/memory-strategies.md).
 
+### V6.1.1–6.1.4 (Point Releases)
+
+1. **Fix-All Severities** *(6.1.4)*: The reviewer fix loop now triggers on ANY issue — HIGH, MEDIUM, or LOW. Builder re-runs until the reviewer returns PASS with zero issues.
+2. **Housekeeper Commit Gate** *(6.1.3)*: The housekeeper must commit and push its skill lifecycle changes before reporting completion. The parent orchestrator waits for that commit+push confirmation before creating the PR. Housekeeper agent gains `Bash` tool for git operations.
+3. **DRY Base-Prompt** *(6.1.2)*: Removed duplicated operational logic from base-prompt (subagent delegation, workflow gates, mode determination, session handoff). The protocol is now the single source of truth for all runtime behavior. Base-prompt provides project-specific configuration only.
+4. **SOPs Template** *(6.1.2)*: New Template 5.10 generates a `.archy/SOPs.md` file during Bootstrap, encoding repo-agnostic git workflow conventions (branching strategy, merge methods, PR requirements). Referenced from base-prompt's Custom Rules section.
+5. **PR Gate** *(6.1.1)*: Builder sessions end at push — no PR created. The parent orchestrator owns the full gate sequence: spec-reviewer → fix loop until PASS → housekeeper → PR creation. Applies to both subagent and inline execution.
+
 ### V6.0 (Previous)
 
 1. **Subagent Delegation (Optional)**: Builder, Architect, and Reviewer modes can now be delegated to specialized subagents.
@@ -90,7 +98,7 @@ This is the `docs-to-code` root repo. It contains only what needs to be portable
 docs-to-code/
 ├── .archy/
 │   ├── archy-protocol.md     # 🧠 The Constitution — runtime rules, skill lifecycle, continuous learning
-│   └── archy-templates.md    # 📐 Templates — specs, queues, base-prompt, skills, candidates, archive, agents, runner
+│   └── archy-templates.md    # 📐 Templates — specs, queues, base-prompt, skills, candidates, archive, agents, runner, SOPs
 ├── docs/
 │   └── memory-strategies.md  # 📝 Design rationale — strategies explored, trade-offs, why this approach
 ├── README.md                 # 📖 This file
@@ -273,6 +281,7 @@ my-project/
 │   ├── mission-control.md      # 📋 Execution Queue
 │   ├── archy-runner.sh         # 🔄 Git-Ops Autopilot Loop
 │   ├── sessions.log            # Audit Trail
+│   ├── SOPs.md                 # Git Workflow conventions
 │   ├── skills/                 # Skill Lifecycle System
 │   │   ├── _project.md         # Project-specific lessons (always loaded)
 │   │   ├── _candidates.md      # Staging buffer (read at session end only)
@@ -285,7 +294,8 @@ my-project/
 │   └── agents/
 │       ├── archy-architect.md
 │       ├── archy-builder.md
-│       └── spec-reviewer.md
+│       ├── spec-reviewer.md
+│       └── archy-housekeeper.md
 ├── src/
 └── package.json
 
@@ -333,6 +343,10 @@ Maintenance Mode detects stale specs and flags them. You can also manually trigg
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 6.1.4 | 2026-04-07 | **Fix-All Severities**: Reviewer fix loop triggers on ANY issue (HIGH, MEDIUM, or LOW). Builder re-runs until reviewer returns PASS with zero issues. |
+| 6.1.3 | 2026-03-27 | **Housekeeper Commit Gate**: Housekeeper must commit+push skill lifecycle changes before reporting completion. Orchestrator waits for confirmation before creating PR. Housekeeper gains `Bash` tool. |
+| 6.1.2 | 2026-03-26 | **DRY Base-Prompt**: Removed duplicated operational logic from base-prompt. Protocol is now the single source of truth. Added SOPs template (5.10) and SOPs reference in base-prompt. |
+| 6.1.1 | 2026-03-25 | **PR Gate**: Builder ends at push (no PR). Parent orchestrator owns: spec-reviewer → fix loop → housekeeper → PR. |
 | 6.1.0 | 2026-03-18 | **"Earned Knowledge"**: Skill lifecycle system — candidates buffer, frequency-based promotion, project skill file, score-sorted demotion, human-only archive with audit routine, user correction fast-track. |
 | 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional), conditional skill loading, quirks cap, Claude Code agent templates. |
 | 5.0.0 | 2026-02-27 | **"Integration & Memory"**: Introduced Autonomous Git-Ops Runner, IDE/Environment Capability extraction, and the Active Skills plugin system. |
