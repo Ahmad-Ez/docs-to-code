@@ -23,7 +23,7 @@ You are **NOT an implementation agent**. You do not write code, do not audit, do
 ## Agents you dispatch to
 
 | Agent | Purpose | When |
-|-------|---------|------|
+| ------- | --------- | ------ |
 | Architect | Plans features, creates specs | Target_Task = "Plan X", or queue empty |
 | Builder | Executes one spec via TDD | Target_Task empty + pending specs |
 | Reviewer | Functional + regression QA | After every Builder COMPLETE |
@@ -38,7 +38,7 @@ You are **NOT an implementation agent**. You do not write code, do not audit, do
 Read `base-prompt.md`'s `Target_Task` field and `mission-control.md`'s queue state.
 
 | Target_Task | Mission Queue | Mode |
-|-|-|-|
+| - | - | - |
 | empty | has unchecked items | **BUILDER** |
 | `"Plan X"` | any | **ARCHITECT** |
 | `"Fix X"` / `"Refactor X"` / `"Update X"` | any | **MAINTENANCE** |
@@ -139,7 +139,7 @@ report:
 ### Verdict meanings
 
 | Verdict | Emitted By | Meaning |
-|---------|-----------|---------|
+| --------- | ----------- | --------- |
 | `COMPLETE` | Architect, Builder, Housekeeper | Agent finished its work successfully |
 | `PASS` | Reviewer, Security Auditor | No blocking issues found |
 | `FAIL` | Reviewer, Security Auditor | Issues exist, block progression |
@@ -149,7 +149,7 @@ report:
 ### Next-action meanings
 
 | Action | Next Step |
-|--------|-----------|
+| -------- | ----------- |
 | `ready_for_critics` | Dispatch Reviewer (+ Auditor if `+Security`) in parallel |
 | `fix_required` | Dispatch Builder again with `previous_reports` populated |
 | `ready_for_housekeeper` | Dispatch Housekeeper |
@@ -166,7 +166,7 @@ If an agent returns malformed YAML, missing required fields, or freeform prose i
 
 ### Builder Mode (the happy path)
 
-```
+```txt
 1. SELECT next eligible spec from mission-control (see §5)
 2. DISPATCH Builder with dossier
 3. AWAIT Builder report
@@ -210,7 +210,7 @@ If Reviewer finds an issue in `src/auth.ts` and Auditor finds a separate issue i
 
 ### Architect Mode
 
-```
+```txt
 1. DISPATCH Architect with dossier containing user's Target_Task
 2. Architect may interrogate the user mid-session if scope is ambiguous
 3. AWAIT Architect report
@@ -222,7 +222,7 @@ If Reviewer finds an issue in `src/auth.ts` and Auditor finds a separate issue i
 
 ### Maintenance Mode
 
-```
+```txt
 1. DISPATCH Builder with maintenance-flavored dossier
    └─ spec_file may reference the legacy spec to update
 2. Proceed through Builder Mode steps 3-10
@@ -268,7 +268,7 @@ Composition applies to **Builder and Reviewer only**. Architect dictates roles i
 ### Examples
 
 | base | spec_override | composition | resolved |
-|------|---------------|-------------|----------|
+| ------ | --------------- | ------------- | ---------- |
 | "Backend Engineer" | null | none | "Backend Engineer" |
 | "Backend Engineer" | "DBA" | replace (DBA is specialization) | "DBA" |
 | "Backend Engineer" | "+Security" | merge | "Backend Engineer with a Security Auditor lens" |
@@ -279,7 +279,7 @@ Composition applies to **Builder and Reviewer only**. Architect dictates roles i
 ## 7. AUTO-HEALING BEHAVIORS
 
 | Condition | Action |
-|-----------|--------|
+| ----------- | -------- |
 | Spec references non-existent file | Dispatch Architect to draft missing spec; re-queue |
 | Builder fails 3 consecutive times in gate cycle | Dispatch Debugger |
 | Debugger returns ESCALATE | HALT with diagnostic summary for user |
@@ -324,7 +324,7 @@ If Debugger had returned ESCALATE instead, you halt and hand the diagnostic summ
 
 At session end, append to `.archy/sessions.log`:
 
-```
+```txt
 === Session {n} | {YYYY-MM-DD HH:MM:SS} ===
 Mode: {builder|architect|maintenance|bootstrap}
 Task: {spec filename or Target_Task description}
@@ -344,6 +344,7 @@ The runner script (if used) reads this log for audit purposes. In interactive mo
 **One spec per session.** This is enforced by you, the Conductor.
 
 At session end:
+
 1. Confirm spec checkboxes reflect reality (not just the agent's claims).
 2. Confirm mission-control reflects reality.
 3. Ensure Builder has committed and pushed the feature branch (no PR yet).
@@ -359,7 +360,7 @@ This discipline prevents context saturation and keeps each session's reasoning f
 ## 11. VERSION HISTORY
 
 | Version | Date | Changes |
-|---------|------|---------|
+| --------- | ------ | --------- |
 | 7.0.0 | 2026-04-18 | Initial release. Defines Conductor role, Task Dossier schema, Structured Report schema, gate sequence with parallel critics and deterministic fix loop, Debugger escalation path, SOPs plugin loading. |
 
 ---

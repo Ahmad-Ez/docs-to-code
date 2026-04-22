@@ -314,7 +314,7 @@ If at any point in the session you find yourself writing code, running tests, or
 *The Conductor loads only skills whose "Load when..." hint matches the current task.*
 
 | Skill | File | Load when... |
-|-------|------|--------------|
+| ------- | ------ | -------------- |
 | Project Quirks | `.archy/skills/_project.md` | Always |
 | {skill name} | `.archy/skills/{file}.md` | {brief trigger description} |
 
@@ -325,7 +325,7 @@ If at any point in the session you find yourself writing code, running tests, or
 *Plugin-style team conventions. Drop new files in `./docs/sops/` and register them here.*
 
 | SOP | File | Load when... |
-|-----|------|--------------|
+| ----- | ------ | -------------- |
 | {e.g., Git Workflow} | `./docs/sops/git-workflow.md` | Always, or when merging |
 
 *(Omit this section entirely if no SOPs are in use.)*
@@ -345,7 +345,7 @@ If at any point in the session you find yourself writing code, running tests, or
 {Per-mode role overrides. Omit the table if using Default Role throughout.}
 
 | Mode | Role Override |
-|------|---------------|
+| ------ | --------------- |
 | Architect | {e.g., System Architect + DBA} |
 | Maintenance | {e.g., Security-Conscious Fixer} |
 ```
@@ -418,7 +418,7 @@ If at any point in the session you find yourself writing code, running tests, or
 ## 6. User Roles
 
 | Role | Description | Key Actions |
-|------|-------------|-------------|
+| ------ | ------------- | ------------- |
 | {Admin} | {Platform owner} | {CRUD users, view analytics} |
 | {Member} | {Regular user} | {Create projects, invite collaborators} |
 
@@ -541,7 +541,7 @@ Used for stack-specific skill files (e.g., `nextjs.md`, `prisma.md`) and for `_p
 ## Entries
 
 | # | Lesson | Category | First Seen | Last Seen | Score | Origin |
-|---|--------|----------|------------|-----------|-------|--------|
+| --- | -------- | ---------- | ------------ | ----------- | ------- | -------- |
 ```
 
 ### C.6 Archive Template
@@ -591,7 +591,7 @@ Each template uses `{{#if env == 'claude-code'}}` ... `{{else}}` ... `{{/if}}` b
 
 ### D.1 Architect
 
-```markdown
+`````markdown
 {{#if env == 'claude-code'}}
 ---
 name: archy-architect
@@ -630,7 +630,7 @@ Plan features. Create spec files. Update mission-control. Never write implementa
 
 ### Step 1 — Investigate
 
-Use your file tools on `src/` (or equivalent root) to map dependencies and understand current architecture. Do not guess existing logic.
+Use your file tools on `src/` (or equivalent root) to map dependencies and understand current architecture. If your environment provides a native codebase exploration tool (e.g., Gemini's codebase_investigator, Claude Code's Explore agent), prefer it over manual Read/Glob traversal for deep investigation. Do not guess existing logic.
 
 Use Glob on `.archy/specs/` to determine the next sequential number. Read at most ONE recent spec for pattern reference. Trust the actual codebase for system state — not old specs.
 
@@ -750,13 +750,13 @@ report:
 ```
 ````
 
-```
+`````
 
 ---
 
 ### D.2 Builder
 
-```markdown
+`````markdown
 {{#if env == 'claude-code'}}
 ---
 name: archy-builder
@@ -886,11 +886,13 @@ report:
 ````
 ```
 
+`````
+
 ---
 
 ### D.3 Reviewer
 
-```markdown
+`````markdown
 {{#if env == 'claude-code'}}
 ---
 name: archy-reviewer
@@ -1014,13 +1016,13 @@ report:
 ```
 
 ````
-```
+`````
 
 ---
 
 ### D.4 Security Auditor
 
-```markdown
+`````markdown
 {{#if env == 'claude-code'}}
 ---
 name: archy-security-auditor
@@ -1140,13 +1142,13 @@ report:
 ```
 
 ````
-```
+`````
 
 ---
 
 ### D.5 Housekeeper
 
-```markdown
+`````markdown
 {{#if env == 'claude-code'}}
 ---
 name: archy-housekeeper
@@ -1282,13 +1284,13 @@ report:
 ```
 
 ````
-```
+`````
 
 ---
 
 ### D.6 Debugger
 
-```markdown
+`````markdown
 {{#if env == 'claude-code'}}
 ---
 name: archy-debugger
@@ -1426,7 +1428,7 @@ report:
 ```
 
 ````
-```
+`````
 
 ## SECTION E: RUNNER SCRIPT TEMPLATE
 
@@ -1719,7 +1721,7 @@ log_session "RUN COMPLETE — Completed: $COMPLETED, Failed: $FAILED, Time: ${MI
 At bootstrap, Section A resolves these placeholders:
 
 | Placeholder | Source | Example |
-|-------------|--------|---------|
+| ------------- | -------- | --------- |
 | `{{AI_CMD}}` | User's ENV choice | `gemini` / `claude` |
 | `{{AI_PROMPT_FLAG}}` | User's ENV | `--prompt` / `-p` |
 | `{{PROJECT_NAME}}` | Brief or user input | `PEX Platform` |
@@ -1758,7 +1760,7 @@ Git-Ops flags are hardcoded to `true` in the generated file per default. Users f
 ## VERSION HISTORY
 
 | Version | Date | Changes |
-|---------|------|---------|
+| --------- | ------ | --------- |
 | 7.0.0 | 2026-04-18 | Initial v7 release. Unified template file with dispatcher for Bootstrap/Migration prompts. Agent templates consolidated with `{{#if env}}` conditionals instead of separate Claude/Gemini file sets. Self-documenting format headers embedded in skill files. SOPs and project-brief moved to `./docs/`. Git-Ops defaults flipped to true. Runner updated to parse Structured Report YAML verdicts instead of grepping prose. |
 
 ---
