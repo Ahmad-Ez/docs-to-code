@@ -1,376 +1,383 @@
-# 🤖 Docs-to-Code (Archy Protocol) (v6.1) — "Earned Knowledge"
+# Docs-to-Code (Archy Protocol) v7.0 — "The Conductor"
 
-Docs-to-Code: A spec-locked, autonomous AI software engineering protocol with continuous learning, environment awareness, and Git-Ops automation.
+Archy is a multi-agent, spec-locked software engineering protocol. You describe what to build. Specialized AI agents plan it, build it, review it, audit it, clean up after themselves, and hand you a PR.
+
+It's designed for native use with **Claude Code** and **Gemini CLI**. One protocol, two environments, zero duplication.
 
 ---
 
-## ⚡ Quick Start (TL;DR)
+## ⚡ Quick Start
+
+**One-time**: Clone the master repo somewhere stable (e.g., `~/docs-to-code`).
 
 ```bash
-# 1. Copy protocol files into your project
-mkdir .archy
-cp ~/docs-to-code/.archy/archy-protocol.md .archy/
-cp ~/docs-to-code/.archy/archy-templates.md .archy/
-
-# 2a. If you have a project brief:
-gemini "Read @.archy/archy-protocol.md and bootstrap this project based on @project-brief.md"
-# Or with Claude Code:
-# claude "Read @.archy/archy-protocol.md and bootstrap this project based on @project-brief.md"
-
-# 2b. If you don't have a brief yet:
-gemini "Read @.archy/archy-protocol.md and bootstrap this project"
-
-# 3. After bootstrap, run autopilot (single task per session):
-gemini "execute @.archy/base-prompt.md"
-
-# 4. Or use the Git-Ops runner for full hands-off autopilot:
-./.archy/archy-runner.sh
-
+git clone https://github.com/Ahmad-Ez/docs-to-code ~/docs-to-code
 ```
 
----
-
-## 🚀 What's New in V6.1?
-
-V6.1 introduces a **skill lifecycle system** — lessons now earn their place through repeated evidence instead of single-pass judgment.
-
-1. **Candidates Buffer**: New lessons land in a staging area (`_candidates.md`) at score 1. Score increments on independent re-encounter across sessions. Only lessons with score ≥ 3 promote to a skill file. This filters signal from noise.
-2. **Project Skill File**: `_project.md` replaces the old "System & Prompting Quirks" section in base-prompt. Project-specific lessons now follow the same lifecycle rules as all other skills — unified system, no special cases.
-3. **Score-Sorted Skills**: Entries in skill files use `[score | last_seen]` format, sorted by score descending. When a file exceeds its 25-entry cap, the lowest-score entries are demoted.
-4. **Human-Only Archive**: Demoted lessons go to `_archive.md`. The AI writes to it but never reads it during normal operation — it's a human-reviewable safety net.
-5. **Demotion-Triggered Archive Audit**: Every 5th demotion triggers an audit routine. The AI scans the archive for recurring patterns (lessons that keep getting independently rediscovered), sums their scores, and revives worthy ones. Self-regulating frequency — active projects audit more often.
-6. **User Correction Fast-Track**: Explicit corrections ("don't do X", "use Y instead") bypass the buffer entirely and promote directly to skill files. High-confidence signals shouldn't wait.
-7. **Housekeeper Subagent**: Skill lifecycle management (promotions, cap enforcement, demotions, archive audits) is delegated to a dedicated `archy-housekeeper` subagent at session end. Falls back to inline execution in single-agent environments.
-
-For the design rationale behind these decisions, see [docs/memory-strategies.md](docs/memory-strategies.md).
-
-### V6.1.1–6.1.4 (Point Releases)
-
-1. **Fix-All Severities** *(6.1.4)*: The reviewer fix loop now triggers on ANY issue — HIGH, MEDIUM, or LOW. Builder re-runs until the reviewer returns PASS with zero issues.
-2. **Housekeeper Commit Gate** *(6.1.3)*: The housekeeper must commit and push its skill lifecycle changes before reporting completion. The parent orchestrator waits for that commit+push confirmation before creating the PR. Housekeeper agent gains `Bash` tool for git operations.
-3. **DRY Base-Prompt** *(6.1.2)*: Removed duplicated operational logic from base-prompt (subagent delegation, workflow gates, mode determination, session handoff). The protocol is now the single source of truth for all runtime behavior. Base-prompt provides project-specific configuration only.
-4. **SOPs Template** *(6.1.2)*: New Template 5.10 generates a `.archy/SOPs.md` file during Bootstrap, encoding repo-agnostic git workflow conventions (branching strategy, merge methods, PR requirements). Referenced from base-prompt's Custom Rules section.
-5. **PR Gate** *(6.1.1)*: Builder sessions end at push — no PR created. The parent orchestrator owns the full gate sequence: spec-reviewer → fix loop until PASS → housekeeper → PR creation. Applies to both subagent and inline execution.
-
-### V6.0 (Previous)
-
-1. **Subagent Delegation (Optional)**: Builder, Architect, and Reviewer modes can now be delegated to specialized subagents.
-2. **Conditional Skill Loading**: Base-prompt contains a menu with "Load when..." hints.
-3. **Claude Code Agent Templates**: Bootstrap generates `.claude/agents/` definitions when environment is Claude Code.
-
----
-
-## 🧭 Table of Contents
-
-* [Philosophy](#philosophy)
-* [Repository Contents](#repository-contents)
-* [Installation](#installation)
-* [The Skills Architecture (Memory)](#the-skills-architecture-memory)
-* [Memory Strategies (Design Rationale)](docs/memory-strategies.md)
-* [Autonomous Git-Ops (Runner)](#autonomous-git-ops-runner)
-* [Subagent Delegation](#subagent-delegation)
-* [Modes Overview](#modes-overview)
-* [Usage Guide](#usage-guide)
-* [The Role System](#the-role-system)
-* [Directory Structure](#directory-structure)
-* [FAQ](#faq)
-
----
-
-## Philosophy
-
-> **"Docs-Driven Development meets Continuous Learning."**
-
-* The AI never writes code without a **Spec**.
-* The Spec never gets written without a **Plan**.
-* The Plan never gets created without a **Brief**.
-* A task is never finished without extracting **Lessons Learned**.
-
-The user focuses on **strategy** (what to build and why). Archy handles **tactics** (how to build it, in what order, verifying it works, and saving the knowledge for next time).
-
----
-
-## Repository Contents
-
-This is the `docs-to-code` root repo. It contains only what needs to be portable:
-
-```text
-docs-to-code/
-├── .archy/
-│   ├── archy-protocol.md     # 🧠 The Constitution — runtime rules, skill lifecycle, continuous learning
-│   └── archy-templates.md    # 📐 Templates — specs, queues, base-prompt, skills, candidates, archive, agents, runner, SOPs
-├── docs/
-│   └── memory-strategies.md  # 📝 Design rationale — strategies explored, trade-offs, why this approach
-├── README.md                 # 📖 This file
-
-```
-
----
-
-## Installation
-
-### Option A: Symlink (Recommended for Protocol)
-
-Symlink the core rules so updating `docs-to-code` updates all your projects simultaneously.
+**Per project** — from inside your project root:
 
 ```bash
-mkdir -p your-project/.archy
-ln -s ~/docs-to-code/.archy/archy-protocol.md your-project/.archy/archy-protocol.md
-ln -s ~/docs-to-code/.archy/archy-templates.md your-project/.archy/archy-templates.md
+# New project (bootstrap):
+claude "execute @~/docs-to-code/archy-templates.md bootstrap"
 
+# Existing v6 project (migrate):
+claude "execute @~/docs-to-code/archy-templates.md migrate"
+
+# Normal work (after bootstrap):
+claude "execute @.archy/base-prompt.md"
 ```
 
-### Option B: Copy (Independent)
-
-```bash
-mkdir -p your-project/.archy
-cp ~/docs-to-code/.archy/archy-protocol.md your-project/.archy/
-cp ~/docs-to-code/.archy/archy-templates.md your-project/.archy/
-
-```
-
-**Note on Skills:** Always *copy* the relevant `.archy/skills/*.md` files into your new project during Bootstrap so Archy has local access to stack knowledge.
+The master-repo files install themselves into your project's `.archy/`. You don't copy anything manually.
 
 ---
 
-## The Skills Architecture (Memory)
+## 🎯 What is v7.0?
 
-Since V6.1, Archy uses a **lifecycle-based skill system** where lessons earn their place through repeated evidence. Knowledge flows through four tiers:
+v7 is the **paradigm shift** release. Earlier versions packed all logic into a monolithic protocol read by a single AI. v7 splits the work across specialized agents, each with narrow scope and fresh context.
 
-```text
-CANDIDATES (_candidates.md)     → Staging area. Score starts at 1, increments on re-encounter.
-    ↓ promote (score ≥ 3)           Expires after 10 sessions unseen. Max 15 entries.
-SKILL FILES (skills/*.md)       → Proven lessons. Score-sorted, max 25 per file.
-    ↓ demote (cap overflow)         Includes _project.md (always loaded) for project-specific lessons.
-ARCHIVE (_archive.md)           → Cold storage. AI writes, never reads (except during audit).
-    ↑ revive (audit finds pattern)  Human-reviewable safety net.
+### The Paradigm Shift
+
+- **One Conductor, many agents.** Your CLI conversation is the Conductor — it reads your config, picks the mode, dispatches specialized agents for each phase, parses their structured reports, and drives the gate sequence.
+- **Strict DRY.** Project config lives in `base-prompt.md`. Orchestration logic lives in `archy-conductor.md`. Role-specific logic lives in each agent file. No duplication.
+- **Structured communication.** Agents don't return prose — they return YAML reports with `verdict`, `issues`, and `next_action` fields. Gate logic is deterministic, not based on grepping English.
+- **Parallel critics, comprehensive fixes.** Reviewer (functional) and Security Auditor (exploits) run in parallel. Builder addresses all findings in one pass — no stale line numbers from sequential fixes.
+- **Escalation path.** When Builder gets stuck (3 failures in a cycle), a Debugger agent takes over with a higher-capability model and broader tools.
+
+---
+
+## 🧑‍🤝‍🧑 The Agent Roster
+
+| Agent | Model (CC / Gemini) | Role |
+| ------- | --------------------- | ------ |
+| **Conductor** | — (main thread) | Reads `base-prompt.md` and `mission-control.md`. Dispatches agents. Parses reports. Runs gates. |
+| **Architect** | opus / gemini-pro | Investigates the codebase. Writes spec files. Tags security-sensitive work with `+Security`. |
+| **Builder** | sonnet / gemini-pro | Executes one spec via TDD. Commits and pushes. Extracts lessons. |
+| **Reviewer** | sonnet / gemini-pro | Functional completeness + regressions. Runs through project skills. |
+| **Security Auditor** | sonnet / gemini-pro | Adversarial exploit check. Triggered only on `+Security` specs. Fixed persona. |
+| **Housekeeper** | haiku / gemini-flash-lite | Skill lifecycle (promotions, caps, archive audit). Commits skill changes. |
+| **Debugger** | opus / gemini-pro | Forensic root-cause when Builder is stuck. Write-capable. Last stop before user escalation. |
+
+Only the Conductor is implicit (it's your CLI conversation). The other six are agent files in `.claude/agents/` or `.gemini/agents/`, generated at bootstrap.
+
+---
+
+## 🌊 The Gate Sequence
+
+```txt
+     ┌────────────┐
+     │ Conductor  │ (your CLI thread)
+     └─────┬──────┘
+           │ 1. pick next spec
+           ▼
+     ┌────────────┐
+     │  Builder   │ ──► commits + pushes feature branch
+     └─────┬──────┘
+           │ 2. report: ready_for_critics
+           ▼
+     ┌────────────┬────────────────┐
+     │  Reviewer  │ Security Auditor│  ← in parallel
+     └─────┬──────┴────────┬───────┘
+           │               │
+           └───────┬───────┘
+                   │ 3. collect both reports
+                   ▼
+            Any FAIL? ──► Builder (with previous_reports)  ──► Loop
+                   │
+                   │ Both PASS
+                   ▼
+          Builder stuck after 3? ──► Debugger ──► re-run critics
+                   │
+                   ▼
+            ┌─────────────┐
+            │ Housekeeper │ → commits skill lifecycle changes
+            └──────┬──────┘
+                   │ 4. commit + push confirmed
+                   ▼
+              Create PR
 ```
 
-**Conditional Loading:** The base-prompt contains a menu table with "Load when..." hints. The AI loads only relevant skill files per task.
+Key properties:
 
- | Skill | File | Load when... |
- | ----- | ---- | ------------ |
- | Project Quirks | `@.archy/skills/_project.md` | Always |
- | React | `@.archy/skills/react-components.md` | Component, JSX, hydration |
-
-**User corrections** ("don't do X", "use Y instead") bypass the buffer and promote directly to skill files — high-confidence signals shouldn't wait.
-
-**Archive Audit:** Every 5th demotion triggers an audit. The AI scans the archive for recurring patterns, sums scores of similar entries, and revives aggregates with score ≥ 3. This catches lessons that keep getting independently rediscovered.
-
-**The Sync Loop:** When Archy learns a generic stack lesson, it flags it in the Session Summary with `[FLAG: Sync upstream...]`. You then copy that lesson back to the master `docs-to-code/skills/` repo so all future projects inherit it.
-
-For the full design rationale (strategies explored, trade-offs, why we chose this approach), see [docs/memory-strategies.md](docs/memory-strategies.md).
+- Critics run **in parallel**, Conductor waits for both before deciding
+- Fix loops address **all findings** (HIGH/MEDIUM/LOW) in a single Builder pass
+- Housekeeper commit must land **before** PR creation
+- After 3 Builder failures in a cycle, Debugger dispatches automatically
 
 ---
 
-## Autonomous Git-Ops (Runner)
+## 📁 Directory Structure
 
-The runner (`archy-runner.sh`) is generated during Bootstrap. It isolates every task into a fresh AI context window.
-
-Edit the top of the script to configure it:
-
-```bash
-AI_CMD='gemini'              # e.g., gemini, claude, aider, cursor
-AUTO_GIT=true                # Enable Git-Ops
-AUTO_CREATE_BRANCH=true      # Auto-branch from dev (feature/spec-id)
-AUTO_COMMIT=true             # Auto-commit on pass
-AUTO_MERGE=false             # Push for human PR review
-
-```
-
-**Usage:**
-
-```bash
-./.archy/archy-runner.sh              # Normal autopilot
-./.archy/archy-runner.sh --dry-run    # Preview what will run
-./.archy/archy-runner.sh --max 5      # Limit to 5 tasks
-
-```
-
----
-
-## Subagent Delegation
-
-When using AI tools that support subagents (e.g., Claude Code with `.claude/agents/`), Archy can delegate each mode to a specialized agent:
-
-| Mode | Agent File | Behavior |
-| ------ | ---------- | -------- |
-| ARCHITECT | `.claude/agents/archy-architect.md` | Plans features, creates specs |
-| BUILDER | `.claude/agents/archy-builder.md` | Executes one spec with TDD |
-| REVIEWER | `.claude/agents/spec-reviewer.md` | Verifies implementation against spec |
-| HOUSEKEEPER | `.claude/agents/archy-housekeeper.md` | Skill lifecycle: promotions, caps, demotions, archive audits |
-| MAINTENANCE | *(none)* | Always inline — scope too varied |
-
-**This is optional.** If no subagents are available (Gemini CLI, Aider, etc.), all modes execute inline as before. The base-prompt's System Logic section handles this with an if/else fallback.
-
-During Bootstrap, Archy generates these agent files automatically when it detects Claude Code as the environment.
-
----
-
-## Modes Overview
-
-| Mode | Trigger | Responsibility |
-| --- | --- | --- |
-| 🏗️ **BOOTSTRAP** | No `base-prompt.md` exists | Scaffolds project, queries IDE capabilities, loads Skills |
-| 👷 **BUILDER** | Empty `Target_Task` + pending items | Executes specs: TDD → Verify via Subagents → Check Box → Extract Lessons |
-| 📐 **ARCHITECT** | `Target_Task = "Plan X"` | Interviews user → creates specs → updates mission-control |
-| 🔧 **MAINTENANCE** | `Target_Task = "Fix X"` | Fixes bugs → updates legacy specs → extracts lessons |
-
----
-
-## Usage Guide
-
-### 1. Architect Mode (Planning)
-
-Set your goal in `base-prompt.md`:
-
-```markdown
-## Target_Task
-Plan the Stripe webhook integration
-
-```
-
-Run `gemini "execute @.archy/base-prompt.md"`. Archy will ask you questions, write the specs, and update the queue.
-
-### 2. Builder Mode (Autopilot)
-
-Clear the `Target_Task` in `base-prompt.md`.
-Run `gemini "execute @.archy/base-prompt.md"`. Archy will find the first unblocked task in the queue, build it, test it, and update the checklist.
-
-### 3. Maintenance Mode (Refactoring)
-
-Set your goal in `base-prompt.md`:
-
-```markdown
-## Target_Task
-Refactor the auth middleware to use Zod schemas
-
-```
-
-Run the prompt. Archy will fix the code and retroactively update the old specs to match reality.
-
----
-
-## The Role System
-
-Archy dynamically shifts personas based on the task:
-
-| Relationship | Behavior | Example |
-| --- | --- | --- |
-| **Specialization** | Spec replaces base | base="Backend Engineer", spec="DBA" → DBA |
-| **Orthogonal** | Roles merge | base="Backend Engineer", spec="Security Auditor" → both |
-| **Conflict** | Spec wins | base="Move Fast", spec="Security-First" → Security-First |
-
-Force a role in a spec file:
-
-* `Role: =DBA` (Ignore base prompt, use only DBA)
-* `Role: +Security` (Merge with base prompt)
-
----
-
-## Directory Structure
-
-After bootstrap, your project will look like this:
-
-```text
+```txt
 my-project/
 ├── .archy/
-│   ├── archy-protocol.md       # Immutable Constitution
-│   ├── archy-templates.md      # On-demand Templates
-│   ├── base-prompt.md          # 🚀 Mission Launcher & Capabilities
-│   ├── mission-control.md      # 📋 Execution Queue
-│   ├── archy-runner.sh         # 🔄 Git-Ops Autopilot Loop
-│   ├── sessions.log            # Audit Trail
-│   ├── SOPs.md                 # Git Workflow conventions
-│   ├── skills/                 # Skill Lifecycle System
-│   │   ├── _project.md         # Project-specific lessons (always loaded)
-│   │   ├── _candidates.md      # Staging buffer (read at session end only)
+│   ├── archy-protocol.md       # Iron Rules + glossary (read by all agents)
+│   ├── archy-conductor.md      # Orchestration brain (read only by Conductor)
+│   ├── archy-templates.md      # Bootstrap + Migration prompts + artifact skeletons
+│   ├── base-prompt.md          # 🚀 Your launchpad — project config, Target_Task
+│   ├── mission-control.md      # 📋 Spec queue (Conductor reads/writes)
+│   ├── archy-runner.sh         # 🔄 Optional batch autopilot
+│   ├── sessions.log            # Audit trail
+│   ├── skills/
+│   │   ├── _project.md         # Project quirks (always loaded)
+│   │   ├── _candidates.md      # Staging buffer (score-based promotion)
 │   │   ├── _archive.md         # Cold storage (human-reviewable)
-│   │   └── nextjs-app-router.md
-│   └── specs/                  # The Blueprints
+│   │   └── nextjs.md           # Stack-specific skills
+│   └── specs/
 │       ├── 00-db-schema.md
 │       └── 01-auth-api.md
-├── .claude/                    # Claude Code only (optional)
-│   └── agents/
-│       ├── archy-architect.md
-│       ├── archy-builder.md
-│       ├── spec-reviewer.md
-│       └── archy-housekeeper.md
+├── .claude/agents/             # Claude Code only
+│   ├── archy-architect.md
+│   ├── archy-builder.md
+│   ├── archy-reviewer.md
+│   ├── archy-security-auditor.md
+│   ├── archy-housekeeper.md
+│   └── archy-debugger.md
+├── .gemini/agents/             # Gemini CLI only (same six files)
+│   └── ...
+├── docs/                       # ← outside .archy/ by design
+│   ├── project-brief.md        # Human-authored project description
+│   └── sops/
+│       └── git-workflow.md     # Team conventions (plugin-style)
 ├── src/
 └── package.json
-
 ```
 
----
-
-## FAQ
-
-**Can I use Archy with Claude Code, Gemini CLI, or Aider?**
-Yes. Archy is a markdown-based protocol that works with any AI tool. Update `AI_CMD` in `archy-runner.sh` to match your CLI. Claude Code users get bonus features: native subagent delegation via `.claude/agents/` files generated during Bootstrap.
-
-**How does Archy know how to use my IDE's browser subagent?**
-During Bootstrap, Archy asks about your environment. It injects the `Environment & Capabilities` block into your `base-prompt.md`. Builder Mode reads this and incorporates it into the Verification phase.
-
-**What if the AI ignores the protocol?**
-Re-anchor it. Start your prompt with: `Read and strictly follow @.archy/archy-protocol.md before doing anything.`
-
-**How do I handle circular dependencies in the queue?**
-Archy detects them and halts automatically. You must manually resolve the `Depends-On` declarations in `mission-control.md`.
-
-### Can I have multiple projects sharing the same protocol?
-
-Yes — that's the design. Symlink `archy-protocol.md` and `archy-templates.md` from a central `docs-to-code` repo. Each project gets its own `base-prompt.md`, `mission-control.md`, `specs/`, and runner scripts.
-
-### What if I want to change the protocol for one project only?
-
-Copy instead of symlink. Then edit the copy freely. But consider putting project-specific rules in `base-prompt.md` first — that's what it's for.
-
-### How do I add a feature mid-project?
-
-Set `Target_Task = "Plan [feature name]"` in `base-prompt.md` and run. Architect Mode will interview you, create specs, and update mission-control with proper dependency declarations.
-
-### How do I skip a task?
-
-Mark it as `[~]` in `mission-control.md`. Builder Mode will skip it.
-
-### What if specs get out of sync with code?
-
-Maintenance Mode detects stale specs and flags them. You can also manually trigger: `Target_Task = "Audit specs against codebase"`.
+`docs/` sits alongside `.archy/` rather than inside it — the brief and SOPs serve the team, not just Archy.
 
 ---
 
-## Version History
+## 🎓 The Skill Lifecycle
 
-| Version | Date | Changes |
-| --- | --- | --- |
-| 6.1.4 | 2026-04-07 | **Fix-All Severities**: Reviewer fix loop triggers on ANY issue (HIGH, MEDIUM, or LOW). Builder re-runs until reviewer returns PASS with zero issues. |
-| 6.1.3 | 2026-03-27 | **Housekeeper Commit Gate**: Housekeeper must commit+push skill lifecycle changes before reporting completion. Orchestrator waits for confirmation before creating PR. Housekeeper gains `Bash` tool. |
-| 6.1.2 | 2026-03-26 | **DRY Base-Prompt**: Removed duplicated operational logic from base-prompt. Protocol is now the single source of truth. Added SOPs template (5.10) and SOPs reference in base-prompt. |
-| 6.1.1 | 2026-03-25 | **PR Gate**: Builder ends at push (no PR). Parent orchestrator owns: spec-reviewer → fix loop → housekeeper → PR. |
-| 6.1.0 | 2026-03-18 | **"Earned Knowledge"**: Skill lifecycle system — candidates buffer, frequency-based promotion, project skill file, score-sorted demotion, human-only archive with audit routine, user correction fast-track. |
-| 6.0.0 | 2026-03-09 | **"Delegation & Discipline"**: Subagent delegation (optional), conditional skill loading, quirks cap, Claude Code agent templates. |
-| 5.0.0 | 2026-02-27 | **"Integration & Memory"**: Introduced Autonomous Git-Ops Runner, IDE/Environment Capability extraction, and the Active Skills plugin system. |
-| 4.1.0 | 2026-02-10 | Role Composition, Auto-Healing, split templates, runner generation. |
-| 4.0.0 | — | Initial "Mission Control" queue architecture. |
+Lessons don't enter the skill files directly. They earn their place:
+
+```txt
+Candidates (_candidates.md)     ← Builder/Debugger write new lessons here
+   │  score starts at 1
+   │  increments on independent re-encounter across sessions
+   │  cap: 15 entries
+   │
+   ▼ score ≥ 3 (promotion, by Housekeeper)
+Skill Files (skills/*.md)       ← Proven lessons, sorted by score
+   │  cap: 25 per file
+   │  loaded conditionally based on "Load when..." hints
+   │
+   ▼ cap overflow (demotion, lowest score)
+Archive (_archive.md)           ← Cold storage, human-reviewable
+      │  Housekeeper reads only during audit
+      │  audit triggers every 5 demotions
+      ▲
+      │ score ≥ 3 aggregate across similar entries
+      └── revive back to relevant skill file
+```
+
+**Two fast-paths:**
+
+- **User corrections** ("don't do X") bypass candidates entirely — promoted direct to skill files.
+- **Standalone Builder sessions** (outside the Conductor cycle) also write directly to candidates, keeping minor fixes from being lost.
+
+Every skill file has a self-documenting `FORMAT SPEC` comment header so agents always know the format without needing to load a separate template.
 
 ---
 
-## Keywords
+## 🚢 Bootstrap: New Project
 
-AI agent, autonomous software engineering, spec-driven development, docs-driven development, TDD, mission control, task queue, Gemini CLI, prompt protocol, Claude Code, subagents, conditional loading
+Run once per project:
+
+```bash
+# With a project brief at docs/project-brief.md:
+# or without a brief (interviews you):
+claude "execute @.archy/archy-templates.md bootstrap"
+or
+gemini --prompt "execute @.archy/archy-templates.md bootstrap"
+```
+
+The bootstrap prompt will:
+
+1. Detect your CLI (Claude Code, Gemini CLI, or both)
+2. Warn if your CLI version is below the known-good minimum
+3. Read your brief or interview you to create one at `docs/project-brief.md`
+4. Ask which environment capabilities you have (browser subagent, etc.)
+5. Ask whether you want starter SOPs (copies samples from the master repo)
+6. Generate all artifacts and agent files
+7. Show you a summary and ask for approval before writing anything
 
 ---
 
-## Credits
+## 🔄 Migration: v6.x → v7.0
+
+If you have an existing Archy v6 project:
+
+```bash
+# From inside your v6 project root:
+claude "execute @~/docs-to-code/archy-templates.md migrate"
+# Gemini equivalent:
+gemini --prompt "execute @~/docs-to-code/archy-templates.md migrate"
+```
+
+>The @~/docs-to-code/archy-templates.md path points to the master repo, not the project's .archy/. Both Claude Code and Gemini CLI support @ references to absolute paths.
+
+The migration:
+
+1. Archives v6 files (protocol, templates, old base-prompt, old agent files) to `.archy/.v6-backup/`
+2. Preserves your specs, skills, mission-control, sessions.log, and project-brief untouched
+3. Regenerates base-prompt using your extracted v6 config
+4. Generates v7 agent files for your environment
+5. Surfaces a "Manual Review" list for anything that didn't map cleanly
+6. Asks for approval before writing
+
+Your specs and skill files work as-is in v7. The format is unchanged between versions — only the orchestration layer is different.
+
+---
+
+## 🎬 Modes of Operation
+
+| Mode | Trigger | What happens |
+| ------ | --------- | -------------- |
+| **Builder** | Empty `Target_Task` + pending specs | Conductor picks next spec, runs gate sequence |
+| **Architect** | `Target_Task = "Plan X"` | Conductor dispatches Architect to interview + draft specs |
+| **Maintenance** | `Target_Task = "Fix X"` or `"Refactor X"` | Full gate sequence, often with spec updates |
+| **Bootstrap** | No `base-prompt.md` | One-shot, via `archy-templates.md bootstrap` |
+| **Migration** | v6 protocol detected | One-shot, via `archy-templates.md migrate` |
+
+---
+
+## 🎭 Role Composition
+
+Builder and Reviewer compose their persona from two sources:
+
+| Base Prompt Default Role | Spec `Role:` Field | Result |
+| -------------------------- | -------------------- | -------- |
+| Backend Engineer | `DBA` (specialization) | DBA only (replace) |
+| Backend Engineer | `+Security` (merge marker) | Backend Engineer with Security lens |
+| Backend Engineer | `=Security-First Engineer` (explicit replace) | Security-First Engineer |
+| Backend Engineer | *empty* | Backend Engineer |
+
+Architect (creates specs), Security Auditor (fixed adversarial), Housekeeper (fixed mechanical), and Debugger (fixed forensic) all have non-composable roles.
+
+---
+
+## 🔌 SOPs as Plugins
+
+SOPs live in `docs/sops/*.md`. They're team-authored conventions (git workflow, code review standards, deployment procedures) that Archy loads as reference, never auto-modifies.
+
+Register them in `base-prompt.md`:
+
+## Active SOPs
+
+| SOP | File | Load when... |
+| --- | ---- | ------------ |
+| Git Workflow | docs/sops/git-workflow.md | Always |
+| Code Review | docs/sops/code-review.md | Reviewer and Architect runs |
+
+Bootstrap offers to copy starter SOPs from the master repo. You can add your own at any time — just drop a file in `docs/sops/` and register it in base-prompt.
+
+---
+
+## 🧠 The Conductor Contract
+
+The Conductor (your CLI conversation) has exclusive responsibilities:
+
+- **Only reader** of `base-prompt.md` and `mission-control.md`
+- **Assembles Task Dossiers** — YAML envelopes that tell each agent exactly what to load and which role to apply
+- **Parses Structured Reports** — YAML verdicts returned by every agent
+- **Runs the gate sequence** — parallel dispatch, fix loops, debugger escalation, housekeeper commit, PR creation
+- **Handles auto-healing** — stale specs, circular dependencies, missing files, malformed reports
+
+Agents never see `base-prompt.md`. Agents never see each other's definitions. Agents see: the protocol (invariants), their own agent file (role), and a Task Dossier (what to do). Nothing else.
+
+This is why v7 is DRY without being fragile: each agent has exactly the context it needs, curated per dispatch, no stale state.
+
+---
+
+## 🛠 Interactive vs. Runner
+
+**Interactive (default, recommended):** Run `execute @.archy/base-prompt.md` one spec at a time. Review the PR. Test locally. Trigger the next session when ready. This is the primary workflow.
+
+**Runner (opt-in batch):** `./archy-runner.sh` loops through your queue autonomously. Use for catching up after a break, CI pipelines, or very high-trust spec quality. Defaults to all Git-Ops true (auto-branch, auto-commit, auto-merge). Edit the top of the script to dial any of them back.
+
+The runner parses structured YAML verdicts from each session, so gate decisions aren't based on prose grep. Three consecutive failures of any kind (FAIL, ESCALATE, infrastructure error, malformed report) halt the runner.
+
+---
+
+## 📚 Files in the Master Repo
+
+```txt
+docs-to-code/
+├── archy-protocol.md           # The invariants (every agent loads)
+├── archy-conductor.md          # Orchestration brain (Conductor loads)
+├── archy-templates.md          # Bootstrap/Migration + artifact skeletons + agent templates
+├── docs/
+│   ├── sops/
+│   │   └── git-workflow.md     # Sample SOP (copied to projects at bootstrap)
+│   └── memory-strategies.md    # Design rationale for the skill lifecycle system
+├── README.md
+└── LICENSE
+```
+
+Four Archy files total: protocol, conductor, templates, plus the sample SOPs. Everything else is generated per-project at bootstrap.
+
+---
+
+## 🤔 FAQ
+
+**Why two CLIs? Isn't this a lot of dual-path work?**
+Minimal. 90% of each agent template is identical across Claude Code and Gemini CLI. Only the frontmatter (tool syntax, model name) differs. One source of truth with `{{#if env}}` blocks, bootstrap resolves them at install time.
+
+**Does Gemini CLI support subagent orchestration?**
+Yes at the top level — the main conversation can dispatch subagents. Gemini blocks *nested* subagent calls (subagent-calling-subagent), which is why the Conductor lives at the top level in both environments. One architecture, two CLIs, no compromise.
+
+**The protocol file is much smaller in v7. Did functionality get lost?**
+No. v6's protocol carried mode definitions, gate sequences, composition rules — all now in `archy-conductor.md`. Only the Conductor reads the conductor file. Agents only need invariants (protocol) + their own definition. The total system isn't smaller; it's partitioned.
+
+**Can I use Archy with Aider, Cursor, or another CLI?**
+The markdown is universal. The agent files assume Claude Code or Gemini CLI frontmatter syntax. For other CLIs, you'd need to adapt the frontmatter (tool names, model identifiers) manually. Everything else works.
+
+**What if an agent ignores the protocol?**
+The Conductor enforces gate sequence deterministically. If an agent returns a malformed report, the Conductor halts and surfaces the raw output. If an agent takes destructive action outside the spec scope, the Conductor halts before PR. These are safety interlocks, not guidelines.
+
+**Can I skip a task?**
+Mark it `[~]` in `mission-control.md`. Conductor skips it.
+
+**What if I want to keep editing specs by hand after they're written?**
+Go ahead. Specs are markdown, meant to be edited. Just don't change a spec's success criteria mid-build — restart the Builder session with the updated spec instead.
+
+---
+
+## 🧭 Philosophy
+
+> Docs-Driven Development meets Continuous Learning meets Strict Isolation.
+
+- No code without a Spec.
+- No Spec without understanding.
+- No Spec completion without verification.
+- No session end without extracting lessons.
+- No agent knowing more than it needs to.
+
+The human focuses on **what** and **why**. Archy handles **how**, **in what order**, and **does it actually work** — then saves what it learned for next time.
+
+---
+
+## 📜 Version History
+
+| Version | Date | Highlights |
+| ------- | ---- | ---------- |
+| 7.0.0 | 2026-04-18 | **"The Conductor"** — Multi-agent isolation. Conductor extracted to dedicated file. Structured Reports replace freeform markdown. Parallel critics with comprehensive-fix loop. Debugger agent for escalation. SOPs and project-brief moved to `docs/`. Self-documenting skill file headers. Unified agent templates with environment conditionals. |
+| 6.1.x | 2026-03-18 onward | "Earned Knowledge" — skill lifecycle, candidates buffer, archive audit. Housekeeper subagent. PR gate separation. |
+| 6.0.0 | 2026-03-09 | "Delegation & Discipline" — first subagent delegation, conditional skill loading. |
+| 5.x | 2026-02 | Git-Ops runner, environment capabilities, skill plugin system. |
+| 4.x | earlier | Mission Control queue, role composition, auto-healing. |
+
+Full protocol history preserved in `archy-protocol-v6.md` for projects that need to trace decisions back.
+
+---
+
+## 🙏 Credits
 
 Archy is a concept by **Ahmad Ez**.
 
-*Docs-to-Code (Archy Protocol) v6.1 — "Earned Knowledge"*
-*Designed for full automation with strategic human oversight.*
-
----
+*Docs-to-Code (Archy Protocol) v7.0 — "The Conductor"*
+*Multi-agent. Strictly isolated. Fully instrumented.*
 
 ## License
 
-This project is open source. Use it, fork it, improve it.
-If you build something cool with it, let me know.
+Open source. Fork it. Improve it. If it saves you from a 3am debugging session, pay it forward.

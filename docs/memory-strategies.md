@@ -92,6 +92,7 @@ The archive went through three design iterations:
 One design decision that emerged naturally: **user corrections should bypass the buffer entirely.**
 
 When a user says "don't mock the database in these tests" or "use Y pattern instead of X," that's:
+
 - Already validated by a human (the highest-quality signal)
 - Often correcting a mistake the AI is about to repeat
 - Time-sensitive — waiting for 3 sightings means the AI makes the same mistake 2 more times
@@ -111,13 +112,27 @@ So user corrections promote directly to skill files. Everything else goes throug
 
 ---
 
+## What Changed in v7
+
+The lifecycle itself didn't change — scores, caps, promotion thresholds, and archive rules all work exactly as v6.1 designed them. Three structural changes reshape how the system is *operated*:
+
+**Housekeeper became a dedicated agent, not a mode step.** In v6, skill lifecycle was a responsibility the Builder handled at session end (or delegated to a housekeeper subagent if available). In v7, the Housekeeper is a first-class agent the Conductor dispatches as a separate gate-sequence step. This closes a subtle failure mode: when Builder was handling its own lifecycle, a distracted Builder could skip it. A dispatched agent with a narrow job doesn't have that option.
+
+**Archive revivals skip the candidates hop.** In v6, archive audits revived aggregates with score ≥ 3 into `_candidates.md`, which meant an already-proven lesson had to re-prove itself. In v7, revivals go directly to the origin skill file (falling back to `_project.md` if the origin no longer exists). The `Origin` metadata stored at demotion time makes this deterministic.
+
+**Direct-to-skill writes for user corrections survived unchanged**, but Builder and Debugger also now write to `_candidates.md` directly — not just via a report field the Housekeeper parses. This supports a workflow where a user spins up Builder independently for small tasks outside the full gate sequence. Those mini-session lessons no longer get lost waiting for a Housekeeper that never runs.
+
+None of these changes affect the rationale below. They shift *who* handles what, not *what* earns a place in memory.
+
+---
+
 ## Summary
 
 The v6.1 skill lifecycle is intentionally simple:
 
 | Tier | File | Cap | Purpose |
-|------|------|-----|---------|
-| Candidates | `_candidates.md` | 15 | Prove yourself (score >= 3 to promote) |
+| ------ | ------ | ----- | --------- |
+| Candidates | `_candidates.md` | 15 | Prove yourself (score ≥ 3 to promote). Written to by Builder, Debugger, and Housekeeper. |
 | Skill Files | `skills/*.md` | 25 each | Proven, score-sorted, conditionally loaded |
 | Archive | `_archive.md` | Uncapped | Human safety net, audited every 5 demotions |
 
