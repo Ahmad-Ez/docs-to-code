@@ -91,6 +91,7 @@ Produce files in this order. Use templates from Section C. Agent files are copy-
 - `.archy/skills/_archive.md` — use template C.6, empty body with format header (demotion counter = 0)
 - `.archy/sessions.log` — empty file
 - `.archy/archy-runner.sh` — use template from Section E, inject `GIT_OPS` values, `chmod +x`
+- `docs/lessons-learned.md` — copy from the master repo to seed initial platform-tested operational/framework lessons (worktree symlinking, Next.js 16 proxy, AST swagger docs, PowerShell automation)
 
 **SOPs (optional):**
 
@@ -186,6 +187,7 @@ Source files come from the master repo (wherever this `archy-templates.md` is lo
 - Master's `archy-conductor.md` → project's `.archy/archy-conductor.md`
 - Master's `archy-templates.md` (this file) → project's `.archy/archy-templates.md`
 - Master's `.agents/` → project's `.agents/` (copy directory as-is)
+- Master's `docs/lessons-learned.md` → project's `docs/lessons-learned.md` (seed framework/orchestration lessons)
 - If old project had `.claude/agents/`:
   Master's `.claude/` → project's `.claude/` (copy directory as-is)
 - If old project had `.gemini/agents/`:

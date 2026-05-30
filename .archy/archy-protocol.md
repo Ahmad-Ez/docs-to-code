@@ -25,6 +25,7 @@ If you are an agent reading this, you do not need to understand orchestration. T
 7. **Structured Reports**: Every agent returns a report in the schema defined by the Conductor. Freeform prose is allowed in the `notes` field only, never in gate-relevant fields (`verdict`, `next_action`, `issues`).
 8. **Selective Loading**: Load only the files required for the current task. The Conductor curates context per dispatch via the Task Dossier; agents do not self-bootstrap beyond their own agent file and this protocol.
 9. **Architectural Accountability**: Every implementation choice that affects scalability, memory footprint, compute cost, or system boundaries must be justified in writing. Specs declare it in their Architectural Decisions section; commits and reports name it in notes. Silent architectural choices are forbidden — if you cannot justify it, halt and ask.
+10. **Mandatory Feature Branching**: All work MUST be performed on a feature branch (prefixed with feature/) branched from the integration branch (e.g., dev). NEVER commit directly to integration or production branches. Exceptions for trivial edits require user's approval first.
 
 ---
 
@@ -50,6 +51,7 @@ If you are an agent reading this, you do not need to understand orchestration. T
 - Manage manifests (`package.json`, `requirements.txt`, etc.) explicitly.
 - Never hardcode secrets; use `.env` patterns.
 - Keep specs and documentation current when external behavior changes.
+- Refer to local `docs/lessons-learned.md` (if present) for platform-tested operational lessons concerning git worktrees, Next.js proxy conventions, AST-based zero-annotation documentation, and Windows PowerShell automation execution syntax.
 
 ### Artifacts & Verification
 
