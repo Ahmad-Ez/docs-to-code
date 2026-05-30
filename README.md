@@ -308,10 +308,14 @@ docs-to-code/
 ├── archy-protocol.md           # The invariants (every agent loads)
 ├── archy-conductor.md          # Orchestration brain (Conductor loads)
 ├── archy-templates.md          # Bootstrap/Migration + artifact skeletons + agent templates
+├── skills/                     # Standard modular skill library (copied based on stack selections)
+│   ├── nextjs-app-router.md    # Standard Next.js skills (e.g. proxy, App Router params)
+│   ├── express-prisma.md       # Standard Express/Prisma adapter & worktree symlink skills
+│   ├── api-design.md           # Standard OpenAPI and Zod AST generation validation skills
+│   └── tooling-scripting.md    # Standard PowerShell scripting automation skills
 ├── docs/
 │   ├── sops/
 │   │   └── git-workflow.md     # Sample SOP (copied to projects at bootstrap)
-│   ├── lessons-learned.md      # Real-world operational and framework integration lessons
 │   └── memory-strategies.md    # Design rationale for the skill lifecycle system
 ├── README.md
 └── LICENSE

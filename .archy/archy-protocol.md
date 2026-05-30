@@ -51,7 +51,6 @@ If you are an agent reading this, you do not need to understand orchestration. T
 - Manage manifests (`package.json`, `requirements.txt`, etc.) explicitly.
 - Never hardcode secrets; use `.env` patterns.
 - Keep specs and documentation current when external behavior changes.
-- Refer to local `docs/lessons-learned.md` (if present) for platform-tested operational lessons concerning git worktrees, Next.js proxy conventions, AST-based zero-annotation documentation, and Windows PowerShell automation execution syntax.
 
 ### Artifacts & Verification
 
