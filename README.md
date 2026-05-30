@@ -309,10 +309,12 @@ docs-to-code/
 ├── archy-conductor.md          # Orchestration brain (Conductor loads)
 ├── archy-templates.md          # Bootstrap/Migration + artifact skeletons + agent templates
 ├── skills/                     # Standard modular skill library (copied based on stack selections)
-│   ├── nextjs-app-router.md    # Standard Next.js skills (e.g. proxy, App Router params)
-│   ├── express-prisma.md       # Standard Express/Prisma adapter & worktree symlink skills
-│   ├── api-design.md           # Standard OpenAPI and Zod AST generation validation skills
-│   └── tooling-scripting.md    # Standard PowerShell scripting automation skills
+│   ├── nextjs-app-router.md    # Next.js framework skills (e.g. proxy, metadata layouts)
+│   ├── react-components.md     # React UI, hydration mismatch, and effect state patterns
+│   ├── express-prisma.md       # Express/Prisma adapter and parallel worktree symlink patterns
+│   ├── api-design.md           # OpenAPI contracts and Zod AST schema validation patterns
+│   ├── testing-esm.md          # Jest ESM mocking, app isolation, and lazy connection patterns
+│   └── tooling-scripting.md    # PowerShell parameters and developer configuration patterns
 ├── docs/
 │   ├── sops/
 │   │   └── git-workflow.md     # Sample SOP (copied to projects at bootstrap)
