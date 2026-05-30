@@ -4,7 +4,7 @@ Archy is a multi-agent, spec-locked software engineering protocol. You describe 
 
 It's designed for native use with **Claude Code**, **Antigravity 2.0**, and **Gemini CLI**. One protocol, three environments, zero duplication.
 
-> ⚠️ **Gemini CLI users**: consumer access ends June 18, 2026. Antigravity (Google AI Pro) is the migration path — connectors already shipped in v7.1.
+> ⚠️ **Gemini CLI users**: consumer access ends June 18, 2026. Antigravity is the migration path — connectors already shipped in v7.1.
 
 ---
 
