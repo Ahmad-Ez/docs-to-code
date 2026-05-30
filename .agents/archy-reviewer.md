@@ -49,11 +49,49 @@ Builder marks steps as `[x]`. Don't trust the checkmarks — verify each claim a
 - Spot-check that they still make sense given Builder's changes.
 - If anything looks broken or inconsistent, flag it.
 
-### Step 6 — Custom Rule Check
+### Step 6 — Architectural Rigor Audit (HIGH severity gate)
+
+Findings here are HIGH severity by default. Do not downgrade unless the smell is in dead code paths or test fixtures.
+
+**6a. O(n²) and accidental quadratics**
+- Nested loops over the same or related collections in hot paths.
+- `for` / `map` / `forEach` / `filter` containing `.find` / `indexOf` / `includes` / another loop on the outer collection.
+- `.find` inside `.map` (classic O(n²) join — should be a hash-map lookup).
+- Repeated `Array.prototype.sort` on the same data inside a loop.
+- Recursive functions whose recursion does not visibly decrease problem size, or whose memoization is missing.
+
+**6b. Resource management**
+- File handles: every `open` / `fs.createReadStream` / `fopen` paired with a guaranteed close (try/finally, context manager, `using`, `.on('close')`)?
+- Database connections: pool acquired without release? Long-lived connections held inside request handlers?
+- Event listeners: every `addEventListener` / `.on(` paired with `removeEventListener` / `.off(`? React `useEffect` cleanup returned?
+- Timers: every `setInterval` / `setTimeout` cleared?
+- Closures retaining per-request state in long-lived objects?
+- Unbounded growth: arrays/maps growing without eviction? Use WeakMap / LRU where appropriate.
+
+**6c. Algorithmic efficiency**
+- N+1 queries: database/API calls inside loops? Should batch via single query or `IN (...)`.
+- Repeated computation: pure function with same args inside a render / hot loop without memoization?
+- Unnecessary re-renders: inline object/function props on list-item parents.
+- Bundle bloat: client-importing server-only modules; full-library imports where named imports exist.
+
+**6d. Silent failure detection**
+- Empty `catch` blocks without a comment justifying the swallow.
+- Ignored Promise rejections: `await`-able calls without `await` or `.catch()`.
+- Floating Promises: async function calls at statement level (not assigned, awaited, or returned).
+- Errors logged at `debug` level inside user-facing flows.
+
+**6e. Spec Section 3 conformance**
+- Does the implementation match the algorithmic complexity declared in spec Section 3.1? An O(n²) implementation of an O(n log n) spec is a HIGH-severity FAIL.
+- Does the data structure used match what was declared in Section 3.2?
+- If the spec lists ADRs in META, do the implementation choices conform to those ADRs?
+
+For each hit, file an issue at HIGH severity with file + line + a one-line description of the smell.
+
+### Step 7 — Custom Rule Check
 
 If the Task Dossier includes project-level custom rules (via SOPs or notes), verify Builder didn't violate them. Examples: "All API routes must use Zod validation", "No `any` types allowed".
 
-### Step 7 — Edge Cases
+### Step 8 — Edge Cases
 
 Think adversarially about the spec's success criteria. What happens with:
 - Empty inputs?
@@ -70,6 +108,8 @@ If the spec names specific edge cases, verify each one is handled. If it doesn't
 - Verify the actual filesystem — do not assume based on Builder's claims.
 - Do NOT check security vulnerabilities — that's the Auditor's job. Focus only on functional correctness and regressions.
 - ANY issue (HIGH, MEDIUM, or LOW) blocks the gate. The Conductor's fix-loop triggers on any FAIL.
+- Architectural Rigor Audit (Step 6) findings are HIGH severity by default. Do not downgrade unless the smell is in dead code paths or test fixtures.
+- If the spec's Section 3 (Architectural Decisions) is missing or hand-waved on a non-trivial spec, flag HIGH and route back to the Architect via the report's `notes`.
 
 ## Structured Report
 

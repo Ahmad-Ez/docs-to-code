@@ -1,7 +1,7 @@
-# ARCHY PROTOCOL (v7.0) — "The Conductor"
+# ARCHY PROTOCOL (v7.2) — "Principal Systems Architect"
 
-**Version**: 7.0.0
-**Min-Compatible-Conductor**: 7.0.0
+**Version**: 7.2.0
+**Min-Compatible-Conductor**: 7.2.0
 
 ---
 
@@ -24,6 +24,7 @@ If you are an agent reading this, you do not need to understand orchestration. T
 6. **Protocol Immutability**: This file must NOT be modified by AI during any mode. Suggest changes to the user; never apply them directly.
 7. **Structured Reports**: Every agent returns a report in the schema defined by the Conductor. Freeform prose is allowed in the `notes` field only, never in gate-relevant fields (`verdict`, `next_action`, `issues`).
 8. **Selective Loading**: Load only the files required for the current task. The Conductor curates context per dispatch via the Task Dossier; agents do not self-bootstrap beyond their own agent file and this protocol.
+9. **Architectural Accountability**: Every implementation choice that affects scalability, memory footprint, compute cost, or system boundaries must be justified in writing. Specs declare it in their Architectural Decisions section; commits and reports name it in notes. Silent architectural choices are forbidden — if you cannot justify it, halt and ask.
 
 ---
 
@@ -88,11 +89,13 @@ If you are an agent reading this, you do not need to understand orchestration. T
 
 | Version | Date | Changes |
 | --------- | ------ | --------- |
+| 7.2.0 | 2026-05-30 | **"Principal Systems Architect"**: Iron Rule 9 (Architectural Accountability) added. Default Role elevated. Architect spec template gains mandatory Architectural Decisions section (algorithmic justification, data-structure rationale, memory/compute trade-offs, rejected alternatives, hardware/software boundary). Reviewer gains HIGH-severity Architectural Rigor Audit (O(n²), resource leaks, N+1, silent failures, Section-3 conformance). Builder halt-for-un-spec'd-architectural-decisions rule + ADR-CANDIDATE bridge. Debugger ARCH-ROOT flag. ADR SOP added under `docs/sops/`. File-Globs spec META field (v8 prep). Conductor reads `docs/todo.md` (or configured Triage_File) at session start. Maintainer upgrade — not an in-protocol AI modification. |
+| 7.1.0 | 2026-05-30 | **"Connectors"**: Decentralized agent prompts. Canonical prompts moved to `.agents/archy-*.md`; thin peripheral connectors per environment in `.claude/agents/`, `.gemini/agents/`, `.antigravity/agents/` (the last with `.md` stub + `.json` manifest for Antigravity 2.0). `archy-templates.md` Section D deprecated. Single source of truth for agent prompts. |
 | 7.0.0 | 2026-04-18 | **"The Conductor"**: Multi-agent isolation. Orchestration logic extracted to `archy-conductor.md`. Structured Reports replace freeform markdown for gate decisions. Task Dossiers replace ad-hoc context assembly. Single-path top-level Conductor (works in both Claude Code and Gemini CLI). Debugger agent added for failure escalation. SOPs extracted to `./docs/sops/` plugin directory. Migration prompt moved to README. |
 
 Full history of pre-v7 versions preserved in `archy-protocol-v6.md` for reference.
 
 ---
 
-*Docs-to-Code (Archy Protocol) v7.0 — "The Conductor"*
+*Docs-to-Code (Archy Protocol) v7.2 — "Principal Systems Architect"*
 *Invariants only. See `archy-conductor.md` for orchestration logic.*

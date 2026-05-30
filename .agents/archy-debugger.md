@@ -40,6 +40,7 @@ Common root causes:
 - Race condition or ordering issue
 - Upstream API contract mismatch
 - Subtle type coercion bug
+- **Architectural root cause**: the bug is downstream of an architectural choice (race from missing transaction boundary, OOM from unbounded cache, latency from N+1 pattern). Do NOT just patch the symptom. Apply a minimal fix to unblock, then mark explicitly in your report's `notes` with the prefix `ARCH-ROOT:` followed by a one-line description. Recommend an ADR or spec amendment so the next gate cycle addresses the structural issue properly.
 
 ### Step 3 — Fix
 

@@ -1,6 +1,6 @@
-# ARCHY CONDUCTOR (v7.0)
+# ARCHY CONDUCTOR (v7.2)
 
-**Version**: 7.0.0
+**Version**: 7.2.0
 **Companion to**: `archy-protocol.md`
 **Loaded by**: The top-level conversation only (Claude Code main thread / Gemini CLI main thread).
 
@@ -34,6 +34,8 @@ You are **NOT an implementation agent**. You do not write code, do not audit, do
 ---
 
 ## 1. MODE DETERMINATION
+
+**Before mode determination**: if a triage file exists at the path declared in `base-prompt.md` under `Triage_File:` (default `docs/todo.md` if unset, fallback to `TODO.md` at repo root), and it contains unchecked items (`- [ ]`), surface a one-line summary and ask the user if any should be promoted to a spec this session. If yes, switch to Architect Mode with `Target_Task` derived from the chosen item. Mark the item `[x]` in the triage file once a spec exists.
 
 Read `base-prompt.md`'s `Target_Task` field and `mission-control.md`'s queue state.
 
@@ -77,10 +79,10 @@ task_dossier:
     - browser_subagent
     - git_ops
   role:                                 # only for builder and reviewer; null otherwise
-    base: "Senior Full-Stack Engineer"
+    base: "Principal Systems Architect"
     spec_override: "+Security"
     composition: merge                  # merge | replace | none
-    resolved: "Senior Full-Stack Engineer, with a Security Auditor lens applied to authentication and data-handling surfaces"
+    resolved: "Principal Systems Architect, with a Security Auditor lens applied to authentication and data-handling surfaces"
   previous_reports: null                # populated on fix-loop iterations; see §3
   target_task: null                     # filled for architect/maintenance modes with the user's request
   notes: null                           # optional freeform context
@@ -302,7 +304,7 @@ User types `execute @.archy/base-prompt.md` with empty Target_Task.
 
 You read base-prompt and mission-control. Next eligible spec: `.archy/specs/03-user-login.md`. Spec has `Role: +Security` (auth feature).
 
-You assemble dossier, evaluate Active Skills against the spec content, pick `_project.md` + `next.js.md`. Dispatch Builder with `role.resolved = "Senior Full-Stack Engineer with a Security Auditor lens applied to authentication surfaces"`.
+You assemble dossier, evaluate Active Skills against the spec content, pick `_project.md` + `next.js.md`. Dispatch Builder with `role.resolved = "Principal Systems Architect with a Security Auditor lens applied to authentication surfaces"`.
 
 Builder returns COMPLETE, `next_action: ready_for_critics`. You dispatch Reviewer and Security Auditor in parallel. Both return PASS. You dispatch Housekeeper. Housekeeper returns COMPLETE with commit SHA. You create the PR. Append to sessions.log. Terminate.
 
@@ -361,9 +363,11 @@ This discipline prevents context saturation and keeps each session's reasoning f
 
 | Version | Date | Changes |
 | --------- | ------ | --------- |
+| 7.2.0 | 2026-05-30 | "Principal Systems Architect": worked-example roles updated to reflect new Default Role. Mode determination now reads `docs/todo.md` (or configured `Triage_File`) at session start to surface async-captured items. |
+| 7.1.0 | 2026-05-30 | "Connectors": no behavioral change (agent-prompt decentralization happened outside this file). |
 | 7.0.0 | 2026-04-18 | Initial release. Defines Conductor role, Task Dossier schema, Structured Report schema, gate sequence with parallel critics and deterministic fix loop, Debugger escalation path, SOPs plugin loading. |
 
 ---
 
-*Archy Conductor v7.0 — The orchestration brain.*
+*Archy Conductor v7.2 — The orchestration brain.*
 *Loaded only by the top-level conversation. Agents never read this file.*

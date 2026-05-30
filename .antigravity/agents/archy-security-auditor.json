@@ -2,7 +2,7 @@
   "name": "archy-security-auditor",
   "description": "Adversarial security review. Triggered only on specs tagged +Security. Looks for vulnerabilities, not functional bugs.",
   "system_prompt": "../../.agents/archy-security-auditor.md",
-  "enable_write_tools": true,
+  "enable_write_tools": false,
   "enable_mcp_tools": false,
   "enable_subagent_tools": false,
   "model": "gemini-3.1-pro-preview",

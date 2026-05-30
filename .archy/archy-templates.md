@@ -1,6 +1,6 @@
-# ARCHY TEMPLATES (v7.0)
+# ARCHY TEMPLATES (v7.2)
 
-**Version**: 7.0.0
+**Version**: 7.2.0
 **Companion to**: `archy-protocol.md`, `archy-conductor.md`
 
 This file serves three purposes:
@@ -40,12 +40,14 @@ You are running **Bootstrap Mode** for the Archy v7.0 protocol. Your job is to s
 
 2. **Detect environment**: Ask the user which CLI they use:
    - `claude-code` (Claude Code)
-   - `gemini-cli` (Gemini CLI)
-   - `both`
+   - `gemini-cli` (Gemini CLI — note: consumer access ends 2026-06-18; prefer Antigravity for new projects)
+   - `antigravity` (Antigravity 2.0 — Google AI Pro)
+   - any combination of the above
 
    Also ask the CLI version. Warn if below minimum:
    - Claude Code: minimum 2.0.0
    - Gemini CLI: minimum 0.8.0 (Gemini CLI's subagent spec is less stable — warn even on current versions that cross-agent delegation is restricted to the top-level Conductor pattern)
+   - Antigravity: TBD (fill in once known)
 
    Store as `ENV` and `ENV_VERSIONS` for later file generation.
 
@@ -74,7 +76,7 @@ If the brief has ambiguities (tech stack conflicts, unclear feature boundaries),
 
 ### A.5 Generate Artifacts
 
-Produce files in this order. Use templates from Section C and Section D (Part 2). Resolve all `{{#if env == 'X'}}` conditionals using the `ENV` value from A.1.
+Produce files in this order. Use templates from Section C. Agent files are copy-pasted directly from `.agents/` (canonical) + per-CLI connector directories (`.claude/`, `.gemini/`, `.antigravity/`).
 
 **Core (always):**
 
@@ -83,7 +85,7 @@ Produce files in this order. Use templates from Section C and Section D (Part 2)
 - `.archy/archy-templates.md` — copy from the master repo (this file)
 - `.archy/base-prompt.md` — fill in template C.1 with project details, Default Role, env capabilities, Git-Ops preferences, and an empty Active Skills table (add `_project.md` as "Load when: always")
 - `.archy/mission-control.md` — use template C.3; populate with initial specs derived from brief's feature list
-- `.archy/specs/*.md` — one spec per identified P0/P1 feature, using the Architect's spec template (from Architect agent definition in Section D.1). Number sequentially (`00-`, `01-`, etc.)
+- `.archy/specs/*.md` — one spec per identified P0/P1 feature, using the Architect's spec template (embedded in `.agents/archy-architect.md`). Number sequentially (`00-`, `01-`, etc.)
 - `.archy/skills/_project.md` — use template C.4, empty body with format header
 - `.archy/skills/_candidates.md` — use template C.5, empty body with format header (session counter = 0)
 - `.archy/skills/_archive.md` — use template C.6, empty body with format header (demotion counter = 0)
@@ -96,12 +98,13 @@ Ask the user: "Do you want starter SOPs (git workflow, code review)? These go in
 
 **Agent files (copy-paste):**
 
-1. Copy the `.agents/` directory from the docs-to-code master repository directly to the project root directory.
+1. Copy the `.agents/` directory from the docs-to-code master repository directly to the project root directory. This is the canonical agent prompt source — always required.
 2. If `ENV` includes `claude-code`:
    Copy the `.claude/` directory from the docs-to-code master repository directly to the project root directory.
 3. If `ENV` includes `gemini-cli`:
    Copy the `.gemini/` directory from the docs-to-code master repository directly to the project root directory.
-4. Copy the `.antigravity/` directory from the docs-to-code master repository directly to the project root directory (for Antigravity 2.0, IDE, and CLI support).
+4. If `ENV` includes `antigravity`:
+   Copy the `.antigravity/` directory from the docs-to-code master repository directly to the project root directory (for Antigravity 2.0, IDE, and CLI support).
 
 ### A.6 Present Summary & Confirm
 
@@ -241,8 +244,8 @@ Terminate.
 ```markdown
 # ARCHY: SESSION LAUNCHER
 
-**Protocol-Version**: 7.0.0
-**Tested-With-Conductor**: 7.0.0
+**Protocol-Version**: 7.2.0
+**Tested-With-Conductor**: 7.2.0
 
 ---
 
@@ -278,10 +281,13 @@ If at any point in the session you find yourself writing code, running tests, or
 
 ## Default Role
 
-{e.g., Senior Full-Stack Engineer (Node.js/React Focus)}
+Principal Systems Architect (with {Stack Focus, e.g., Node.js/React})
 
-**Capabilities**: {e.g., System Architecture, API Design, DevOps, Security}
-**Tone**: {e.g., Objective, Professional, Concise}
+**Capabilities**: System Architecture, Algorithmic Reasoning (Big-O), Data-Structure Selection, Resource & Memory Management, API Design, Distributed Systems, DevOps, Security-by-Design, Hardware/Software Boundary Reasoning.
+**Tone**: Objective, Rigorous, Pragmatic. Justify decisions with complexity analysis and rejected-alternatives reasoning. No hand-waving.
+**Posture**: Treat every non-trivial change as an architectural decision. Surface trade-offs before writing code. Rigor is not over-engineering — pick the simplest viable solution.
+
+**Triage_File** (optional): {Path to your todo/triage file, e.g., `docs/todo.md` or `TODO.md`. Conductor reads at session start to surface async-captured items. Omit to disable.}
 
 ---
 
@@ -330,6 +336,7 @@ If at any point in the session you find yourself writing code, running tests, or
 | SOP | File | Load when... |
 | ----- | ------ | -------------- |
 | {e.g., Git Workflow} | `./docs/sops/git-workflow.md` | Always, or when merging |
+| Architecture Decision Records | `./docs/sops/architecture-decision-records.md` | Architect dispatches; Reviewer when spec META lists ADRs |
 
 *(Omit this section entirely if no SOPs are in use.)*
 
@@ -889,19 +896,15 @@ Git-Ops flags are hardcoded to `true` in the generated file per default. Users f
 
 | Template | Defined In | Used By | When |
 | ---------- | ----------- | --------- | ------ |
-| Spec File | Section D.1 (baked into Architect agent) | Architect | Every new spec |
+| Spec File | Embedded in `.agents/archy-architect.md` | Architect | Every new spec |
 | Base-Prompt | Section C.1 | Bootstrap, Migration | Project scaffolding |
 | Project Brief | Section C.2 | Bootstrap (interview flow) | If brief doesn't exist at bootstrap |
 | Mission Control | Section C.3 | Bootstrap | Initial queue scaffolding |
 | Skill File | Section C.4 | Bootstrap (empty init), Housekeeper (on first promotion to new file) | Scaffolding + lifecycle |
 | Candidates Buffer | Section C.5 | Bootstrap | Initial empty state |
 | Archive | Section C.6 | Bootstrap | Initial empty state |
-| Architect Agent | Section D.1 | Bootstrap | One-time agent install |
-| Builder Agent | Section D.2 | Bootstrap | One-time agent install |
-| Reviewer Agent | Section D.3 | Bootstrap | One-time agent install |
-| Security Auditor Agent | Section D.4 | Bootstrap | One-time agent install |
-| Housekeeper Agent | Section D.5 | Bootstrap | One-time agent install |
-| Debugger Agent | Section D.6 | Bootstrap | One-time agent install |
+| Canonical Agent Prompts | `.agents/archy-*.md` (NOT in this file) | Bootstrap copies directory as-is | One-time agent install |
+| CLI Connectors | `.claude/agents/`, `.gemini/agents/`, `.antigravity/agents/` | Bootstrap copies env-specific dirs | One-time agent install |
 | Runner Script | Section E.1 | Bootstrap | One-time, opt-in |
 
 **Files this template does NOT generate** (user-authored, live in `./docs/`):
@@ -915,8 +918,10 @@ Git-Ops flags are hardcoded to `true` in the generated file per default. Users f
 
 | Version | Date | Changes |
 | --------- | ------ | --------- |
+| 7.2.0 | 2026-05-30 | "Principal Systems Architect": Default Role elevated. Active SOPs table gains ADR row. Bootstrap A.1 adds Antigravity as 3rd CLI option. A.5 Antigravity copy now conditional on ENV. A.5/F stale Section D references replaced with `.agents/` references. Version stickers in base-prompt template bumped to 7.2.0. Optional Triage_File field added to base-prompt template. |
+| 7.1.0 | 2026-05-30 | "Connectors": Section D (Agent Templates) deprecated. Agent definitions migrated to canonical `.agents/archy-*.md` + thin per-CLI connectors in `.claude/`, `.gemini/`, `.antigravity/`. |
 | 7.0.0 | 2026-04-18 | Initial v7 release. Unified template file with dispatcher for Bootstrap/Migration prompts. Agent templates consolidated with `{{#if env}}` conditionals instead of separate Claude/Gemini file sets. Self-documenting format headers embedded in skill files. SOPs and project-brief moved to `./docs/`. Git-Ops defaults flipped to true. Runner updated to parse Structured Report YAML verdicts instead of grepping prose. |
 
 ---
 
-*Archy Templates v7.0 — End of templates file.*
+*Archy Templates v7.2 — End of templates file.*
