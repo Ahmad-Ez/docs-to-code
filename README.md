@@ -1,4 +1,4 @@
-# Docs-to-Code (Archy Protocol) v7.0 — "The Conductor"
+# Docs-to-Code (Archy Protocol) v7.1 — "Connectors"
 
 Archy is a multi-agent, spec-locked software engineering protocol. You describe what to build. Specialized AI agents plan it, build it, review it, audit it, clean up after themselves, and hand you a PR.
 
@@ -361,6 +361,7 @@ The human focuses on **what** and **why**. Archy handles **how**, **in what orde
 
 | Version | Date | Highlights |
 | ------- | ---- | ---------- |
+| 7.1.0 | 2026-05-30 | **"Connectors"** — Centralized agent definitions and created peripheral connectors (Claude Code, Gemini CLI, and Antigravity). |
 | 7.0.0 | 2026-04-18 | **"The Conductor"** — Multi-agent isolation. Conductor extracted to dedicated file. Structured Reports replace freeform markdown. Parallel critics with comprehensive-fix loop. Debugger agent for escalation. SOPs and project-brief moved to `docs/`. Self-documenting skill file headers. Unified agent templates with environment conditionals. |
 | 6.1.x | 2026-03-18 onward | "Earned Knowledge" — skill lifecycle, candidates buffer, archive audit. Housekeeper subagent. PR gate separation. |
 | 6.0.0 | 2026-03-09 | "Delegation & Discipline" — first subagent delegation, conditional skill loading. |
@@ -375,7 +376,7 @@ Full protocol history preserved in `archy-protocol-v6.md` for projects that need
 
 Archy is a concept by **Ahmad Ez**.
 
-*Docs-to-Code (Archy Protocol) v7.0 — "The Conductor"*
+*Docs-to-Code (Archy Protocol) v7.1 — "Connectors"*
 *Multi-agent. Strictly isolated. Fully instrumented.*
 
 ## License
