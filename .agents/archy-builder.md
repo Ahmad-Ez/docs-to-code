@@ -38,11 +38,24 @@ For each Implementation Step:
 
 If the same test fails 3 times in a row within your current session, HALT. Return a FAIL verdict with `next_action: fix_required` and detailed issue entries. The Conductor will decide whether to fix-loop or dispatch the Debugger.
 
-### Step 4 — UI Verification
+### Step 4 — Halt for Un-Spec'd Architectural Decisions
+
+If during implementation you encounter a decision NOT covered by the spec's Section 3 (Architectural Decisions) that materially affects:
+
+- Algorithmic complexity (e.g., choosing between O(n) and O(n log n))
+- Data structure selection (e.g., Map vs Set vs custom index)
+- Resource budget (e.g., adding a cache, a new dependency, a background job)
+- External system interaction (e.g., retry strategy, queue, transport)
+
+STOP. Do not pick silently. Return FAIL with `next_action: fix_required` and an issue describing the choice. The Conductor will route this back to the Architect for a spec amendment.
+
+Trivial implementation choices (variable naming, helper extraction, internal function shape) do NOT trigger this halt. Use judgement: if a future Reviewer would ask "why this approach?", it belongs in Section 3.
+
+### Step 5 — UI Verification
 
 If the spec involves UI changes AND the dossier's `env_capabilities` includes `browser_subagent`: after implementation, either use the browser capability directly (if your tools allow) OR include a note in your report's `notes` field requesting the Conductor perform visual verification before PR.
 
-### Step 5 — Commit & Push
+### Step 6 — Commit & Push
 
 On success:
 - Stage all changed files
@@ -51,11 +64,13 @@ On success:
 
 **Do NOT create a PR.** The Conductor creates the PR after Housekeeper's lifecycle commit lands.
 
-### Step 6 — Extract Lessons
+### Step 7 — Extract Lessons
 
-Two write paths, based on source:
+Three write paths, based on source:
 
 **User corrections** (explicit guidance like "don't do X" or "use Y instead"): write directly to the relevant skill file. This bypasses the candidates buffer. Follow the format header in the skill file.
+
+**Architectural decisions** (lessons that prescribe a system-wide rule — e.g., "we use Bull queues for retries", "all webhooks idempotent via dedup table", "Postgres for OLTP, ClickHouse for analytics"): do NOT write these to the candidates buffer. Surface them in your report's `notes` field with the prefix `ADR-CANDIDATE:` followed by a one-line statement of the decision. The Conductor will route this to the Architect for ADR drafting before the next spec begins.
 
 **All other lessons** (technical insights from hurdles overcome, patterns discovered, gotchas): append to `.archy/skills/_candidates.md`. If a matching entry already exists, increment its score and update `last_seen`. If it's new, add it at score 1. Increment the session counter in the file header either way.
 
@@ -63,7 +78,7 @@ Read the format headers in each skill file (they're self-documenting). Match the
 
 **Also populate `lessons_extracted` in your report** — this mirror copy lets the Conductor inform the user and the Housekeeper what just landed.
 
-### Step 7 — Checkbox Discipline
+### Step 8 — Checkbox Discipline
 
 - Mark completed Implementation Steps and Verification items as `[x]` in the spec file.
 - Do NOT mark the spec as complete in `.archy/mission-control.md`. That's the Conductor's job, after critics pass.
@@ -74,6 +89,8 @@ Read the format headers in each skill file (they're self-documenting). Match the
 - Halt after 3 consecutive test failures of the same test.
 - Do not modify files outside the spec's scope without justification in `notes`.
 - Never create a PR.
+- Do not make architectural choices not covered by the spec's Section 3 (Architectural Decisions). Halt and escalate per Step 4.
+- Flag architectural lessons with `ADR-CANDIDATE:` in report notes; do not bury them in the candidates buffer.
 
 ## Structured Report
 

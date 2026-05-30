@@ -1,8 +1,10 @@
-# Docs-to-Code (Archy Protocol) v7.1 — "Connectors"
+# Docs-to-Code (Archy Protocol) v7.2 — "Principal Systems Architect"
 
 Archy is a multi-agent, spec-locked software engineering protocol. You describe what to build. Specialized AI agents plan it, build it, review it, audit it, clean up after themselves, and hand you a PR.
 
-It's designed for native use with **Claude Code** and **Gemini CLI**. One protocol, two environments, zero duplication.
+It's designed for native use with **Claude Code**, **Antigravity 2.0**, and **Gemini CLI**. One protocol, three environments, zero duplication.
+
+> ⚠️ **Gemini CLI users**: consumer access ends June 18, 2026. Antigravity (Google AI Pro) is the migration path — connectors already shipped in v7.1.
 
 ---
 
@@ -361,6 +363,7 @@ The human focuses on **what** and **why**. Archy handles **how**, **in what orde
 
 | Version | Date | Highlights |
 | ------- | ---- | ---------- |
+| 7.2.0 | 2026-05-30 | **"Principal Systems Architect"** — Iron Rule 9 (Architectural Accountability). Default Role elevated to Principal Systems Architect. Architect spec template gains mandatory Architectural Decisions section (Big-O, data-structure rationale, trade-offs, rejected alternatives, hardware/software boundary). Reviewer gains HIGH-severity Architectural Rigor Audit (O(n²), resource leaks, N+1, silent failures, spec-Section-3 conformance). Builder halt-for-un-spec'd-architectural-decisions rule + ADR-CANDIDATE bridge. Debugger ARCH-ROOT flag. ADR SOP added. File-Globs spec META field (v8 prep). Conductor reads `docs/todo.md` (or configured `Triage_File`) at session start. |
 | 7.1.0 | 2026-05-30 | **"Connectors"** — Centralized agent definitions and created peripheral connectors (Claude Code, Gemini CLI, and Antigravity). |
 | 7.0.0 | 2026-04-18 | **"The Conductor"** — Multi-agent isolation. Conductor extracted to dedicated file. Structured Reports replace freeform markdown. Parallel critics with comprehensive-fix loop. Debugger agent for escalation. SOPs and project-brief moved to `docs/`. Self-documenting skill file headers. Unified agent templates with environment conditionals. |
 | 6.1.x | 2026-03-18 onward | "Earned Knowledge" — skill lifecycle, candidates buffer, archive audit. Housekeeper subagent. PR gate separation. |
@@ -376,7 +379,7 @@ Full protocol history preserved in `archy-protocol-v6.md` for projects that need
 
 Archy is a concept by **Ahmad Ez**.
 
-*Docs-to-Code (Archy Protocol) v7.1 — "Connectors"*
+*Docs-to-Code (Archy Protocol) v7.2 — "Principal Systems Architect"*
 *Multi-agent. Strictly isolated. Fully instrumented.*
 
 ## License
