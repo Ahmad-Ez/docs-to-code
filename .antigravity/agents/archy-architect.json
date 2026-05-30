@@ -1,0 +1,10 @@
+{
+  "name": "archy-architect",
+  "description": "Plans features by investigating the codebase and authoring spec files. Does not write implementation code.",
+  "system_prompt": "../../.agents/archy-architect.md",
+  "enable_write_tools": true,
+  "enable_mcp_tools": false,
+  "enable_subagent_tools": false,
+  "model": "gemini-3.1-pro-preview",
+  "effort": "high"
+}

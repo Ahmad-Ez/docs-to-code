@@ -1,0 +1,10 @@
+{
+  "name": "archy-housekeeper",
+  "description": "Manages skill lifecycle (promotions, caps, archive audits) and commits skill file changes to git.",
+  "system_prompt": "../../.agents/archy-housekeeper.md",
+  "enable_write_tools": true,
+  "enable_mcp_tools": false,
+  "enable_subagent_tools": false,
+  "model": "gemini-3.1-flash-lite-preview",
+  "effort": "low"
+}

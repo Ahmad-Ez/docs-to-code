@@ -1,0 +1,10 @@
+{
+  "name": "archy-builder",
+  "description": "Executes one spec from mission-control via TDD. Writes lessons to the candidates buffer.",
+  "system_prompt": "../../.agents/archy-builder.md",
+  "enable_write_tools": true,
+  "enable_mcp_tools": false,
+  "enable_subagent_tools": false,
+  "model": "gemini-3.1-pro-preview",
+  "effort": "high"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "archy-debugger",
+  "description": "Forensic root-cause analysis and fix when Builder is stuck after 3 consecutive failures. Write-capable. Runs on high-capability model.",
+  "system_prompt": "../../.agents/archy-debugger.md",
+  "enable_write_tools": true,
+  "enable_mcp_tools": false,
+  "enable_subagent_tools": false,
+  "model": "gemini-3.1-pro-preview",
+  "effort": "high"
+}
