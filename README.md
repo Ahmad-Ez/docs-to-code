@@ -311,6 +311,7 @@ docs-to-code/
 ├── docs/
 │   ├── sops/
 │   │   └── git-workflow.md     # Sample SOP (copied to projects at bootstrap)
+│   ├── lessons-learned.md      # Real-world operational and framework integration lessons
 │   └── memory-strategies.md    # Design rationale for the skill lifecycle system
 ├── README.md
 └── LICENSE
