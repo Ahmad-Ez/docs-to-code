@@ -2,7 +2,7 @@
   "name": "archy-reviewer",
   "description": "Reviews Builder output against the spec. Checks functional completeness and regressions. Does NOT check security.",
   "system_prompt": "../../.agents/archy-reviewer.md",
-  "enable_write_tools": true,
+  "enable_write_tools": false,
   "enable_mcp_tools": false,
   "enable_subagent_tools": false,
   "model": "gemini-3.1-pro-preview",
