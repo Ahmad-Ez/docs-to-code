@@ -203,13 +203,3 @@ git push origin --delete hotfix/bug-description
 | **Author**       | Write code, pass tests, resolve conflicts              |
 | **Reviewer**     | Validate logic, check quality, approve/request changes |
 | **Release Lead** | Create release branch, merge to `main`, tag release    |
-
----
-
-## Archy Integration
-
-When using this SOP with the Archy docs-to-code protocol, it is highly recommended to enforce branching discipline directly inside the constitutional rules:
-
-1. **Protocol Integration**: Add the custom branching rule as **Iron Rule 10: Mandatory Feature Branching** in your project's `.archy/archy-protocol.md`:
-   > **10. Mandatory Feature Branching**: All work MUST be performed on a feature branch (prefixed with feature/) branched from the integration branch (e.g., dev). NEVER commit directly to integration or production branches. Exceptions for trivial edits require user's approval first.
-2. **Autopilot Runner**: Ensure `GIT_OPS` settings in `base-prompt.md` are configured with `auto_create_branch: true` so the Conductor automatically manages and checks out feature branches named after spec IDs (e.g., `feature/04-auth`).
