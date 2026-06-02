@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+# bin/archy-cockpit
+#
+# Opens (or reattaches to) a persistent tmux cockpit for an Archy project.
+#
+# Usage:
+#   archy-cockpit [PROJECT_DIR]
+#
+# PROJECT_DIR defaults to $PWD. Must be a bootstrapped Archy project
+# (.archy/base-prompt.md must exist).
+#
+# Layout (3 panes):
+#   LEFT  (60%) — conductor: your main claude session
+#   RIGHT TOP   — live tail of .archy/sessions.log
+#   RIGHT BOTTOM — scratch shell
+#
+# Session name: archy-<project-dirname>
+# Idempotent: if the session already exists, reattaches instead of creating.
+#
+# One-time setup — add the master repo's bin/ to PATH:
+#   echo 'export PATH="$HOME/docs-to-code/bin:$PATH"' >> ~/.bashrc  # or ~/.zshrc
+
+set -euo pipefail
+
+PROJECT_DIR="${1:-$PWD}"
+PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
+PROJECT_NAME="$(basename "$PROJECT_DIR")"
+SESSION="archy-${PROJECT_NAME}"
+
+# ─── Validate ────────────────────────────────────────────────────────
+
+if ! command -v tmux &>/dev/null; then
+  echo "❌  tmux is not installed. Run: sudo apt install tmux  (or brew install tmux)" >&2
+  exit 1
+fi
+
+if [[ ! -f "$PROJECT_DIR/.archy/base-prompt.md" ]]; then
+  echo "❌  Not an Archy project — .archy/base-prompt.md not found in: $PROJECT_DIR" >&2
+  echo "    Run bootstrap first: claude \"execute @~/docs-to-code/.archy/archy-templates.md bootstrap\"" >&2
+  exit 1
+fi
+
+SESSION_LOG="$PROJECT_DIR/.archy/sessions.log"
+touch "$SESSION_LOG"
+
+# ─── Reattach if already running ────────────────────────────────────
+
+if tmux has-session -t "$SESSION" 2>/dev/null; then
+  echo "↩  Reattaching to existing session: $SESSION"
+  exec tmux attach-session -t "$SESSION"
+fi
+
+# ─── Build the cockpit ───────────────────────────────────────────────
+
+# Create detached session; conductor pane is pane 0
+tmux new-session -d -s "$SESSION" -c "$PROJECT_DIR"
+
+# Split right column off (40% width); this becomes pane 1
+tmux split-window -h -p 40 -t "${SESSION}:0" -c "$PROJECT_DIR"
+
+# Split the right column into top (log) and bottom (scratch); top = pane 1, bottom = pane 2
+tmux split-window -v -p 35 -t "${SESSION}:0.1" -c "$PROJECT_DIR"
+
+# ─── Wire up panes ───────────────────────────────────────────────────
+
+# Pane 1 (right-top): live sessions.log
+tmux send-keys -t "${SESSION}:0.1" "tail -f '${SESSION_LOG}'" Enter
+
+# Pane 2 (right-bottom): scratch — just land in the project dir
+tmux send-keys -t "${SESSION}:0.2" "cd '${PROJECT_DIR}'" Enter
+
+# Pane 0 (left): conductor — cd to project and show the invocation hint
+tmux send-keys -t "${SESSION}:0.0" "cd '${PROJECT_DIR}'" Enter
+tmux send-keys -t "${SESSION}:0.0" "echo ''" Enter
+tmux send-keys -t "${SESSION}:0.0" "echo '  Archy cockpit — ${PROJECT_NAME}'" Enter
+tmux send-keys -t "${SESSION}:0.0" "echo '  Run: claude \"execute @.archy/base-prompt.md\"'" Enter
+tmux send-keys -t "${SESSION}:0.0" "echo ''" Enter
+
+# Focus conductor pane
+tmux select-pane -t "${SESSION}:0.0"
+
+# ─── Attach ──────────────────────────────────────────────────────────
+
+exec tmux attach-session -t "$SESSION"
