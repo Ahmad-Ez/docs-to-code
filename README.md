@@ -299,6 +299,12 @@ This is why v7 is DRY without being fragile: each agent has exactly the context 
 
 The runner parses structured YAML verdicts from each session, so gate decisions aren't based on prose grep. Three consecutive failures of any kind (FAIL, ESCALATE, infrastructure error, malformed report) halt the runner.
 
+**Cockpit (persistent tmux session):** `archy-cockpit [PROJECT_DIR]` opens a 3-pane tmux session — conductor shell on the left, live `sessions.log` tail top-right, scratch shell bottom-right. Detach with `Ctrl-b d` and reattach later from anywhere on the same machine; the `claude` session keeps running. Session is named `archy-<project>` and is idempotent (reattaches if already open). Add `bin/` from the master repo to your `PATH` once:
+
+```bash
+echo 'export PATH="$HOME/docs-to-code/bin:$PATH"' >> ~/.zshrc  # or ~/.bashrc
+```
+
 ---
 
 ## 📚 Files in the Master Repo
